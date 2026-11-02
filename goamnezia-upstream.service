@@ -1,0 +1,11 @@
+[Unit]
+Description=goAmnezia pro — проверка обновлений Amnezia (раз в сутки, без автообновления)
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Environment=GOAMNEZIA_WHO=timer
+TimeoutStartSec=30min
+ExecStart=/bin/bash /opt/goamnezia/install.sh --action=upstream-tick --json

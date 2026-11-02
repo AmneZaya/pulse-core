@@ -1,0 +1,5 @@
+[Unit]
+Description=goAmnezia: ротация логов по размеру
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/logrotate /etc/logrotate.d/goamnezia /etc/logrotate.d/goamnezia-nginx

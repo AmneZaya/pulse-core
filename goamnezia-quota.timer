@@ -1,0 +1,12 @@
+[Unit]
+Description=goAmnezia pro — лимиты и сроки пользователей (каждые 5 минут)
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=5min
+RandomizedDelaySec=1min
+AccuracySec=1min
+Unit=goamnezia-quota.service
+
+[Install]
+WantedBy=timers.target

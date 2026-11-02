@@ -1,0 +1,12 @@
+[Unit]
+Description=goAmnezia pro — сторож контейнеров (каждые 2 минуты)
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=2min
+RandomizedDelaySec=30s
+AccuracySec=1min
+Unit=goamnezia-watch.service
+
+[Install]
+WantedBy=timers.target

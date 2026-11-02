@@ -1,0 +1,24 @@
+[Unit]
+Description=goAmnezia pro web panel (127.0.0.1:1985)
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/goamnezia-admin
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Environment=PYTHONUNBUFFERED=1
+Environment=GOAMNEZIA_DIR=/opt/goamnezia
+Environment=GOAMNEZIA_ADMIN_DIR=/opt/goamnezia-admin
+Environment=GOAMNEZIA_BOT_DIR=/opt/goamnezia-bot
+Environment=GOAMNEZIA_ACTION_BIN=/opt/goamnezia/install.sh
+Environment=GOAMNEZIA_ACTIONS_JSON=/opt/goamnezia/lib/actions.json
+Environment=GOAMNEZIA_ADMIN_HOST=127.0.0.1
+Environment=GOAMNEZIA_ADMIN_PORT=1985
+ExecStart=/usr/bin/env python3 /opt/goamnezia-admin/server.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

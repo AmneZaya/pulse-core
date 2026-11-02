@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ru" data-hero="" data-theme="light" data-tint="neutral" data-density="detailed" data-btn="pill" data-cards="shadow" data-fs="m" data-vibrant="false" data-motion="on" data-device="desktop" data-nav="full" data-tgc="off">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>goAmnezia pro — панель</title>
+  <script>
+    (function () {
+      // Первый кадр — сразу в выбранном виде: вид приходит с сервера (/api/appearance), а до его ответа —
+      // копия из localStorage. Иначе тёмная панель мигала бы белым при каждой загрузке.
+      //
+      // Мини-апп Telegram передаёт подпись (initData) и цвета клиента в адресе: #tgWebAppData=…&tgWebAppThemeParams=…
+      // Читаем их сами и держим в sessionStorage — так панель не зависит от скрипта с telegram.org, который у
+      // нашей аудитории часто заблокирован, а после перехода по одноразовому билету (?s=) хэш из адреса пропадает.
+      var root = document.documentElement, tg = null, isTg = false, ap = {};
+      try {
+        var h = location.hash.replace(/^#/, "");
+        if (h.indexOf("tgWebAppData=") !== -1) {
+          var parts = h.split("&");
+          for (var i = 0; i < parts.length; i++) {
+            var kv = parts[i].split("=");
+            if (kv[0] === "tgWebAppData" && kv[1]) sessionStorage.setItem("goamnezia-tg-init", decodeURIComponent(kv[1]));
+            if (kv[0] === "tgWebAppThemeParams" && kv[1]) sessionStorage.setItem("goamnezia-tg-theme-params", decodeURIComponent(kv[1]));
+          }
+        }
+        isTg = !!sessionStorage.getItem("goamnezia-tg-init");
+        tg = JSON.parse(sessionStorage.getItem("goamnezia-tg-theme-params") || "null");
+      } catch (e) { /* без sessionStorage подпись живёт только на этой загрузке */ }
+      try { ap = JSON.parse(localStorage.getItem("goamnezia-appearance-v1") || "{}") || {}; } catch (e) { ap = {}; }
+      var pick = function (v, list, d) { return list.indexOf(v) !== -1 ? v : d; };
+      var theme = pick(ap.theme, ["light", "dark", "system"], "system");
+      if (isTg) { try { theme = pick(localStorage.getItem("goamnezia-tg-theme"), ["light", "dark", "system", "telegram"], "telegram"); } catch (e) { theme = "telegram"; } }
+      var hex = /^#([0-9a-f]{6})$/i, useTg = theme === "telegram" && tg && hex.test(tg.bg_color || "");
+      var th = theme;
+      if (theme === "system") th = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      if (theme === "telegram") {
+        th = "light";
+        if (useTg) { var n = parseInt(tg.bg_color.slice(1), 16); th = ((n >> 16) * 299 + ((n >> 8) & 255) * 587 + (n & 255) * 114) / 1000 < 128 ? "dark" : "light"; }
+      }
+      var W = "oklch(0.9911 0 0)", E = "oklch(0.2103 0.0059 285.89)", hue = Math.max(0, Math.min(359, parseInt(ap.hue, 10) || 200));
+      var AC = { ga: ["oklch(0.6 0.13 222)", W], blue: ["oklch(0.6204 0.195 253.83)", W], sky: ["oklch(0.72 0.13 228)", E], lavender: ["oklch(0.6 0.19 293)", W],
+        mint: ["oklch(0.74 0.15 163)", E], coral: ["oklch(0.64 0.19 33)", W], graphite: th === "dark" ? ["oklch(0.95 0 0)", E] : ["oklch(0.24 0.006 286)", W], custom: ["oklch(0.63 0.17 " + hue + ")", W] };
+      var acc = AC[ap.accent] || AC.ga;
+      if (useTg && hex.test(tg.button_color || "")) acc = [tg.button_color, hex.test(tg.button_text_color || "") ? tg.button_text_color : W];
+      root.setAttribute("data-theme", th);
+      root.setAttribute("data-tint", pick(ap.tint, ["neutral", "warm", "cool"], "neutral"));
+      root.setAttribute("data-density", pick(ap.density, ["min", "balanced", "detailed"], "detailed"));
+      root.setAttribute("data-btn", pick(ap.btn, ["pill", "round"], "pill"));
+      root.setAttribute("data-cards", pick(ap.cards, ["shadow", "border", "flat"], "shadow"));
+      root.setAttribute("data-fs", pick(ap.fs, ["s", "m", "l"], "m"));
+      root.setAttribute("data-vibrant", ap.vibrant === true ? "true" : "false");
+      root.setAttribute("data-motion", ap.motion === false ? "off" : "on");
+      root.setAttribute("data-nav", pick(ap.nav, ["full", "icons", "top"], "full"));
+      root.setAttribute("data-device", matchMedia("(max-width: 699.98px)").matches ? "phone" : "desktop");
+      root.setAttribute("data-tgc", useTg ? "on" : "off");
+      root.style.setProperty("--accent", acc[0]);
+      root.style.setProperty("--accent-foreground", acc[1]);
+      root.style.setProperty("--radius", Math.max(0, Math.min(16, parseInt(ap.radius, 10) >= 0 ? parseInt(ap.radius, 10) : 8)) + "px");
+      if (useTg) {
+        root.style.setProperty("--tg-bg", tg.bg_color);
+        root.style.setProperty("--tg-secondary-bg", hex.test(tg.secondary_bg_color || "") ? tg.secondary_bg_color : tg.bg_color);
+        root.style.setProperty("--tg-text", hex.test(tg.text_color || "") ? tg.text_color : (th === "dark" ? "#ffffff" : "#000000"));
+        root.style.setProperty("--tg-hint", hex.test(tg.hint_color || "") ? tg.hint_color : "#8e8e93");
+      }
+      try { if (localStorage.getItem("goamnezia-lang") === "en") root.setAttribute("lang", "en"); } catch (e) { /* приватное окно */ }
+    }());
+  </script>
+  <link rel="stylesheet" href="./styles.css?v=0.5.0">
+</head>
+<body>
+  <div class="gx-app" id="app">
+    <aside class="gx-side" id="side" hidden></aside>
+    <div class="gx-mainwrap">
+      <div class="gx-frame">
+        <header class="gx-head" id="head"></header>
+        <main class="gx-main" id="main">
+          <!-- Плашка идущего действия: установка профиля занимает до 15 минут, и всё это время человеку нужно
+               видеть, что панель работает, а не тост, который погас через три секунды. -->
+          <div id="progress" class="gx-busy" role="status" aria-live="polite" hidden></div>
+          <!-- Значок загрузки для разделов, которые ещё не переделаны: до ответа ядра их страница не видна. -->
+          <div id="pageLoader" class="gx-loader" role="status" aria-live="polite" hidden>
+            <span class="gx-spin" aria-hidden="true"></span>
+            <span data-i18n="loading">Загрузка…</span>
+          </div>
+          <section class="gx-page" data-page="overview"></section>
+          <section class="gx-page" data-page="users" hidden></section>
+          <section class="gx-page" data-page="profiles" hidden></section>
+          <section class="gx-page" data-page="traffic" hidden></section>
+          <section class="gx-page" data-page="backups" hidden></section>
+          <section class="gx-page" data-page="logs" hidden></section>
+          <section class="gx-page" data-page="agents" hidden></section>
+          <section class="gx-page" data-page="settings" hidden></section>
+        </main>
+        <nav class="gx-tabs" id="tabs" aria-label="Разделы" data-i18n-aria-label="ariaSections" hidden></nav>
+      </div>
+    </div>
+  </div>
+  <!-- Слои поверх панели: окна, шторки, поиск ⌘K, лист «Ещё». -->
+  <div id="layers"></div>
+  <div id="toastHost"></div>
+  <script defer src="./app.js?v=0.5.0"></script>
+</body>
+</html>

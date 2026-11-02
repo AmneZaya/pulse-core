@@ -1,0 +1,17 @@
+{
+  "amneziawg-go": {
+    "repo": "amneziavpn/amneziawg-go",
+    "tag": "3.1.20260828",
+    "digest": "sha256:cbafc02b8373a83f428272db6d8001b37bc02e6211cbd8c0cb4e2e3759b12b72",
+    "amd64_digest": "sha256:c68009d33df3aef4654db72bf1a7880cfa0a631fe866c50d9ae3dd34ddd7c13a",
+    "checked": "2026-09-08"
+  },
+  "amnezia-wg": {
+    "repo": "amneziavpn/amnezia-wg",
+    "tag": "latest",
+    "digest": "sha256:ea050861bd2012a6265817636ce7c0c15764ef955782d953cef42e05c1381250",
+    "checked": "2026-09-08"
+  },
+  "client_release": "5.0.2.1",
+  "xray_release": "v26.7.28"
+}

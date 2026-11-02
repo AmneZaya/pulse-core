@@ -1,0 +1,15 @@
+[Unit]
+Description=goAmnezia pro — изоляция клиентов сразу после старта контейнера профиля
+After=docker.service
+PartOf=docker.service
+
+[Service]
+Type=simple
+User=root
+Environment=GOAMNEZIA_WHO=isolation
+ExecStart=/bin/bash /opt/goamnezia/install.sh --isolation-watch
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target docker.service

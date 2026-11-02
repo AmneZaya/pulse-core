@@ -1,0 +1,23 @@
+[Unit]
+Description=goAmnezia pro - connection pages and subscriptions (docs/CLIENTS.md, docs/SUBSCRIPTION.md)
+Documentation=file:///opt/goamnezia/docs/CLIENTS.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+Environment=GOAMNEZIA_DIR=/opt/goamnezia
+Environment=GOAMNEZIA_ACTION_BIN=/opt/goamnezia/install.sh
+Environment=GOAMNEZIA_AUDIT_LOG=/var/log/goamnezia-audit.log
+Environment=GOAMNEZIA_BOT_DIR=/opt/goamnezia-bot
+Environment=GOAMNEZIA_LOCK_DIR=/run/goamnezia
+ExecStart=/usr/bin/env python3 /opt/goamnezia/lib/pages_server.py --dir /opt/goamnezia --bind 127.0.0.1 --port 1987
+Restart=always
+RestartSec=3
+# Ключи людей проходят через процесс службы; временные файлы не видны другим
+PrivateTmp=true
+NoNewPrivileges=false
+
+[Install]
+WantedBy=multi-user.target

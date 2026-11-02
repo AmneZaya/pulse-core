@@ -1,0 +1,11 @@
+[Unit]
+Description=goAmnezia pro — сторож контейнеров (каждые 2 минуты)
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Environment=GOAMNEZIA_WHO=timer
+TimeoutStartSec=20min
+ExecStart=/bin/bash /opt/goamnezia/install.sh --action=watch-tick --json

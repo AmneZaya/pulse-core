@@ -1,0 +1,144 @@
+{
+  "client_dns": [
+    "8.8.8.8",
+    "8.8.4.4"
+  ],
+  "domain": "westernrun.de",
+  "endpoint_host": "",
+  "installed": true,
+  "lang": "ru",
+  "lazy": {
+    "domain": "westernrun.de",
+    "keys": [
+      "hilly_ramallah",
+      "windy_baku",
+      "coral_tarawa",
+      "ancient_damascus",
+      "green_lilongwe"
+    ],
+    "pages": {
+      "ancient_damascus": "p-0348",
+      "coral_tarawa": "p-a8e0",
+      "green_lilongwe": "p-2286",
+      "hilly_ramallah": "p-de90",
+      "windy_baku": "p-cb44"
+    }
+  },
+  "mcp": {
+    "http_enabled": false,
+    "http_port": 1986
+  },
+  "mode": "pro",
+  "options": {
+    "alt_svc": false,
+    "drop_icmp": false
+  },
+  "panel": {
+    "miniapp_auto": true,
+    "miniapp_path": "app-TMJPzKwLfZTzQ9J5p6Go12aCHqTuvJna9j9hc4gfO2Fj4N2O8vZWAGdYdTD7jValY_KcFxl9epcWM3zobbMyjg",
+    "password_pending": false,
+    "port": 1985,
+    "trust_tunnel": true
+  },
+  "profiles": {
+    "awg2": {
+      "container": "amnezia-awg2",
+      "enabled": true,
+      "iface": "awg0",
+      "image": "amneziavpn/amneziawg-go",
+      "image_digest": "sha256:cbafc02b8373a83f428272db6d8001b37bc02e6211cbd8c0cb4e2e3759b12b72",
+      "image_tag": "3.1.20260828",
+      "installed_at": "2026-11-01T09:17:02Z",
+      "line": "2.0",
+      "params": {
+        "ContentPaddingAddition": "",
+        "DisableCookies": "",
+        "H1": "320570212-320574510",
+        "H2": "913090544-913092968",
+        "H3": "1607125838-1607129600",
+        "H4": "1247262920-1247265253",
+        "HeaderProtectionKey": "",
+        "I1": "<b 0x0ad9858000010001000000000669636c6f756403636f6d0000010001c00c000100010000105a00044d583737>",
+        "I2": "",
+        "I3": "",
+        "I4": "",
+        "I5": "",
+        "Jc": "6",
+        "Jmax": "50",
+        "Jmin": "10",
+        "KeepaliveTimeout": "",
+        "MTU": "1280",
+        "MaxHandshakeAttempts": "",
+        "PersistentKeepalive": "25",
+        "RandomTrailers": "",
+        "RejectAfterTime": "",
+        "RekeyAfterTime": "",
+        "RekeyTimeout": "",
+        "S1": "146",
+        "S2": "77",
+        "S3": "42",
+        "S4": "21"
+      },
+      "port": 443,
+      "preset": "default",
+      "server_pubkey": "g0DD5WaqPM9fHBavvP6MwY4jCWxKGNMZrDdLfmxmm0s=",
+      "subnet": "10.8.2.0/24"
+    },
+    "awg3": {
+      "container": "amnezia-awg3",
+      "enabled": true,
+      "iface": "awg0",
+      "image": "amneziavpn/amneziawg-go",
+      "image_digest": "sha256:cbafc02b8373a83f428272db6d8001b37bc02e6211cbd8c0cb4e2e3759b12b72",
+      "image_tag": "3.1.20260828",
+      "installed_at": "2026-11-01T09:17:07Z",
+      "line": "3.1",
+      "params": {
+        "ContentPaddingAddition": "10-100",
+        "DisableCookies": "on",
+        "H1": "1",
+        "H2": "2",
+        "H3": "3",
+        "H4": "4",
+        "HeaderProtectionKey": "GIvhw8FNZZifYuDGiOfvXK9CS7dsTUxLiXk1ZFJWnX0=",
+        "I1": "<b 0x11d6858000010001000000000669636c6f756403636f6d0000010001c00c000100010000105a00044d583737>",
+        "I2": "",
+        "I3": "",
+        "I4": "",
+        "I5": "",
+        "Jc": "5",
+        "Jmax": "50",
+        "Jmin": "10",
+        "KeepaliveTimeout": "5-15",
+        "MTU": "1280",
+        "MaxHandshakeAttempts": "15-20",
+        "PersistentKeepalive": "25",
+        "RandomTrailers": "on",
+        "RejectAfterTime": "150-180",
+        "RekeyAfterTime": "100-120",
+        "RekeyTimeout": "3-7",
+        "S1": "12",
+        "S2": "12",
+        "S3": "12",
+        "S4": "12"
+      },
+      "port": 8214,
+      "preset": "default",
+      "server_pubkey": "dMOJNmhx6U1s+6Cr8V1KpzSOlUa6ltoWn+2GdPf15yI=",
+      "subnet": "10.8.3.0/24"
+    }
+  },
+  "schema": 1,
+  "server_ip": "138.124.92.198",
+  "site": {
+    "cert": "letsencrypt",
+    "listen": "public",
+    "mcp_location": false,
+    "pages_location": true,
+    "panel_path": "app-TMJPzKwLfZTzQ9J5p6Go12aCHqTuvJna9j9hc4gfO2Fj4N2O8vZWAGdYdTD7jValY_KcFxl9epcWM3zobbMyjg",
+    "subs_location": true,
+    "template_id": "gh_romprokop_carstore",
+    "template_source": "https://github.com/romprokop/CarStore"
+  },
+  "version": "1.0.13"
+}

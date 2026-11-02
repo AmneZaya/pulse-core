@@ -1,0 +1,20 @@
+[Unit]
+Description=goAmnezia pro Telegram bot
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/goamnezia-bot
+EnvironmentFile=/opt/goamnezia-bot/.env
+Environment=PATH=/opt/goamnezia-bot/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Environment=PYTHONUNBUFFERED=1
+Environment=GOAMNEZIA_DIR=/opt/goamnezia
+Environment=GOAMNEZIA_BOT_DIR=/opt/goamnezia-bot
+ExecStart=/opt/goamnezia-bot/venv/bin/python /opt/goamnezia-bot/bot.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

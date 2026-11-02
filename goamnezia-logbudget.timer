@@ -1,0 +1,8 @@
+[Unit]
+Description=goAmnezia: сторож бюджета логов каждые 15 минут
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=15min
+AccuracySec=1min
+[Install]
+WantedBy=timers.target

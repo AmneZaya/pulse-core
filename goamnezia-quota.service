@@ -1,0 +1,11 @@
+[Unit]
+Description=goAmnezia pro — лимиты и сроки пользователей (каждые 5 минут)
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Environment=GOAMNEZIA_WHO=timer
+TimeoutStartSec=10min
+ExecStart=/bin/bash /opt/goamnezia/install.sh --action=quota-tick --json

@@ -1,0 +1,5 @@
+[Unit]
+Description=goAmnezia: сторож бюджета логов
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c 'source /opt/goamnezia/lib/common.sh && source /opt/goamnezia/lib/i18n.sh && load_language "$(detect_language)" && source /opt/goamnezia/lib/docker.sh && source /opt/goamnezia/lib/logbudget.sh && logb_enforce'

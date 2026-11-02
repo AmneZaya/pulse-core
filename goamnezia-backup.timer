@@ -1,0 +1,11 @@
+[Unit]
+Description=goAmnezia: таймер бэкапа
+
+[Timer]
+OnCalendar=*-*-* 03:20:00
+Persistent=true
+RandomizedDelaySec=15m
+Unit=goamnezia-backup.service
+
+[Install]
+WantedBy=timers.target

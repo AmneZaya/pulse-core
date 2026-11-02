@@ -1,0 +1,76 @@
+Kaskad 3 (WP-K): build fix for amneziawg-linux-kernel-module v3.1.20260906
+(archive sha256 e32fa46f1b6f9e319c5261f0b0765c3a9261e40cb7c4616fd73500da961a2932,
+commit 4569c4c67f3a57414969260cafbbd04694fbaae0).
+
+Source: upstream pull request #218, open (not merged) on 2026-10-05:
+https://github.com/amnezia-vpn/amneziawg-linux-kernel-module/pull/218
+commit 62189503fa51bc049d826e226fdb49ee683f53f2 by VaisVaisov <vais55.va@gmail.com>,
+2026-09-02, taken unchanged (below this note). License: GPL-2.0, the license of the module
+(src/compat/compat.h: Copyright (C) 2015-2019 Jason A. Donenfeld, AmneziaVPN).
+
+Why: Ubuntu 26.04 kernels 7.0.0-38 and newer backported the new signature of
+setup_udp_tunnel_sock (struct sock * instead of struct socket *) under an unchanged
+LINUX_VERSION_CODE (upstream issues #252 and #259). The tag gates its compat macro on
+KERNEL_VERSION(7, 1, 5) and does not build there; the patch detects each signature at
+compile time instead (Ubuntu changed only setup_udp_tunnel_sock, the patch checks both).
+
+How Kaskad uses it: lib/kaskad/gw/awgkmod.py applies it with "patch -p2" inside
+/usr/src/amneziawg-3.1.20260906 (that directory holds src/ of the archive), and only when the
+kernel headers declare the new signature (include/net/udp_tunnel.h); the kernel hook
+/etc/kernel/postinst.d/zz-kaskad-amneziawg does the same for a newly installed kernel.
+
+From 62189503fa51bc049d826e226fdb49ee683f53f2 Mon Sep 17 00:00:00 2001
+From: VaisVaisov <vais55.va@gmail.com>
+Date: Wed, 2 Sep 2026 10:57:58 +0500
+Subject: [PATCH] compat: detect udp_tunnel_sock signature at compile time, not
+ by kernel version
+
+---
+ src/compat/compat.h | 33 +++++++++++++++++++++++++++++----
+ 1 file changed, 29 insertions(+), 4 deletions(-)
+
+diff --git a/src/compat/compat.h b/src/compat/compat.h
+index 3b8606d7..e33230a4 100644
+--- a/src/compat/compat.h
++++ b/src/compat/compat.h
+@@ -1444,11 +1444,36 @@ static inline void __compat_chacha20_crypt(struct chacha_state *state,
+ 
+ #endif
+ 
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(7, 1, 5)
++/*
++ * Some very recent kernel snapshots (not yet in an official release at the
++ * time of writing) changed udp_tunnel_sock_release()/setup_udp_tunnel_sock()
++ * to take a struct sock * instead of a struct socket *. LINUX_VERSION_CODE
++ * can't reliably gate this, since some distros (e.g. CachyOS) backport it
++ * early under an unchanged version number. Detect the real signature at
++ * compile time instead.
++ */
+ #include <net/udp_tunnel.h>
+-#define setup_udp_tunnel_sock(net, sk, sock_cfg) setup_udp_tunnel_sock(net, sk->sk_socket, sock_cfg)
+-#define udp_tunnel_sock_release(sk) udp_tunnel_sock_release(sk->sk_socket)
+-#endif
++
++static inline void __compat_udp_tunnel_sock_release(struct sock *sk)
++{
++	if (__builtin_types_compatible_p(typeof(&udp_tunnel_sock_release), void (*)(struct sock *)))
++		((void (*)(struct sock *))udp_tunnel_sock_release)(sk);
++	else
++		((void (*)(struct socket *))udp_tunnel_sock_release)(sk->sk_socket);
++}
++
++static inline void __compat_setup_udp_tunnel_sock(struct net *net, struct sock *sk,
++						    struct udp_tunnel_sock_cfg *cfg)
++{
++	if (__builtin_types_compatible_p(typeof(&setup_udp_tunnel_sock),
++					  void (*)(struct net *, struct sock *, struct udp_tunnel_sock_cfg *)))
++		((void (*)(struct net *, struct sock *, struct udp_tunnel_sock_cfg *))setup_udp_tunnel_sock)(net, sk, cfg);
++	else
++		((void (*)(struct net *, struct socket *, struct udp_tunnel_sock_cfg *))setup_udp_tunnel_sock)(net, sk->sk_socket, cfg);
++}
++
++#define udp_tunnel_sock_release(sk) __compat_udp_tunnel_sock_release(sk)
++#define setup_udp_tunnel_sock(net, sk, cfg) __compat_setup_udp_tunnel_sock(net, sk, cfg)
+ 
+ #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 18, 0)
+ #define WQ_PERCPU 0

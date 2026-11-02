@@ -1,0 +1,8 @@
+[Unit]
+Description=goAmnezia: ротация логов по размеру каждый час
+[Timer]
+OnBootSec=10min
+OnUnitActiveSec=1h
+AccuracySec=1min
+[Install]
+WantedBy=timers.target

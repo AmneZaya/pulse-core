@@ -1,0 +1,12 @@
+[Unit]
+Description=goAmnezia pro — статистика трафика по суткам (каждые 10 минут)
+
+[Timer]
+OnBootSec=4min
+OnUnitActiveSec=10min
+RandomizedDelaySec=1min
+AccuracySec=1min
+Unit=goamnezia-stats.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,1879 @@
+{
+  "schema": 1,
+  "_comment": "Каталог приложений для подключения (docs/CLIENTS.md §2–§4, §12). Один файл на продукт, выходит с версией. support: yes | no | unknown | <версия, с которой линейка поддерживается>. Ссылки kind: appstore | googleplay | github | site | izzy. Необязательные name_en (имя по-английски, если в name есть русские слова) и price {ru, en} (пометка платного приложения рядом с «неофициальное») — для страницы подключения. mirror — только у открытых приложений (имена файлов релизов сверены с GitHub API 17.09.2026, см. _comment у каждого): repo и regex имени файла релиза по платформе (значение — строка или объект {repo, pattern}, если сборки этой платформы живут в другом репозитории). Сведения собраны по открытым источникам на дату checked; unknown — источником не подтверждено. static: false — приложение только для подписки: на вкладке «Статический ключ» его нет. subscription — умеет подписку (вкладка «Подписка», docs/CLIENTS.md §2 и §7; тот же список — clients в ответе sub-create, sub-show, sub-rotate): объект или список вариантов, если форматов у приложения несколько (AWG Manager; variant {ru, en} — подпись формата у переключателя «Формат»). format mihomo — профиль mihomo all.yaml (deeplink — шаблон ссылки «Открыть в приложении»: {url} — адрес подписки, {name} — подпись человека, {minutes} — интервал обновления в минутах, {host_path} — адрес без https:// (WG Tunnel скачивает с https://<хост>/<путь>); update_hours — как часто приложение обновляет подписку по умолчанию, 0 — с интервалом сервера: по заголовку Profile-Update-Interval или по {minutes} в ссылке), format txt — ссылки amneziawg:// всех линий all.txt (у incy deeplink incy://add/{url}: адрес как есть, их пример), format conf — разовый .conf линии по ссылке awgNN.conf (once, lines — линии в порядке предпочтения, command — команда роутера: {iface} и {url}), format vpn — разовый ключ vpn:// линии по ссылке awgNN.vpn (once, lines); platforms — на каких платформах приложение берёт подписку (нет поля — на всех своих); recommended — платформы, где приложение «рекомендуем» (на платформе — одно); qr — что в QR: url — адрес, deeplink — ссылка «Открыть в приложении», key — сам ключ линии, пусто — QR нет (на странице QR — только на телефонах, у incy — везде); qr_alt — второй QR рядом (url — голый адрес: его берёт сканер внутри incy); copy — что копирует «Скопировать»: url (нет поля) — адрес, key — сам ключ линии (vpn:// или текст .conf), command — команда роутера; paste {ru, en} — куда вставить скопированное («Скопировано: … Теперь <paste>», {minutes} — интервал сервера); line_note {ru, en} — фраза у переключателя линий вместо «Берите ключ 3.1; не подключился — 2.0»; hint {ru, en} — как добавить.",
+  "checked": "2026-09-25",
+  "lines": [
+    "1.0",
+    "1.5",
+    "2.0",
+    "3.1"
+  ],
+  "platforms": [
+    "ios",
+    "android",
+    "android_tv",
+    "tvos",
+    "windows",
+    "macos",
+    "linux",
+    "router"
+  ],
+  "apps": [
+    {
+      "id": "amneziavpn",
+      "name": "AmneziaVPN",
+      "developer": "Amnezia",
+      "official": true,
+      "license": "GPL-3.0",
+      "source": "https://github.com/amnezia-vpn/amnezia-client",
+      "platforms": {
+        "ios": {
+          "links": [
+            {
+              "kind": "appstore",
+              "url": "https://apps.apple.com/app/id1600529900",
+              "note": {
+                "ru": "Скрыто в российском App Store по требованию Роскомнадзора — нужен Apple ID другой страны",
+                "en": "Hidden in the Russian App Store at Roskomnadzor's request — an Apple ID of another country is needed"
+              }
+            }
+          ],
+          "support": {
+            "1.0": "yes",
+            "1.5": "yes",
+            "2.0": "4.8.14",
+            "3.1": "5.0.1"
+          },
+          "note": {
+            "ru": "iPhone и iPad с iOS/iPadOS 16+. Версии — как в App Store. В российском магазине вместо него — DefaultVPN (официальный форк) и AmneziaWG",
+            "en": "iPhone and iPad with iOS/iPadOS 16+. Versions as shown in the App Store. In the Russian store use DefaultVPN (official fork) or AmneziaWG instead"
+          }
+        },
+        "android": {
+          "links": [
+            {
+              "kind": "googleplay",
+              "url": "https://play.google.com/store/apps/details?id=org.amnezia.vpn",
+              "note": {
+                "ru": "",
+                "en": ""
+              }
+            },
+            {
+              "kind": "github",
+              "url": "https://github.com/amnezia-vpn/amnezia-client/releases/latest",
+              "note": {
+                "ru": "APK с GitHub, если Google Play недоступен",
+                "en": "APK from GitHub when Google Play is unavailable"
+              }
+            }
+          ],
+          "support": {
+            "1.0": "yes",
+            "1.5": "4.8.8.3",
+            "2.0": "4.8.12.9",
+            "3.1": "5.0.1.5"
+          },
+          "note": {
+            "ru": "Android 9+ (для Android 7–8 сборки временно нет)",
+            "en": "Android 9+ (no build for Android 7–8 for now)"
+          }
+        },
+        "android_tv": {
+          "links": [
+            {
+              "kind": "googleplay",
+              "url": "https://play.google.com/store/apps/details?id=org.amnezia.vpn",
+              "note": {
+                "ru": "",
+                "en": ""
+              }
+            },
+            {
+              "kind": "github",
+              "url": "https://github.com/amnezia-vpn/amnezia-client/releases/latest",
+              "note": {
+                "ru": "APK ставится через файловый менеджер или adb",
+                "en": "Install the APK through a file manager or adb"
+              }
+            }
+          ],
+          "support": {
+            "1.0": "yes",
+            "1.5": "4.8.8.3",
+            "2.0": "4.8.12.9",
+            "3.1": "5.0.1.5"
+          },
+          "note": {
+            "ru": "",
+            "en": ""
+          }
+        },
+        "windows": {
+          "links": [
+            {
+              "kind": "github",
+              "url": "https://github.com/amnezia-vpn/amnezia-client/releases/latest",
+              "note": {
+                "ru": "",
+                "en": ""
+              }
+            },
+            {
+              "kind": "site",
+              "url": "https://amnezia.org/downloads",
+              "note": {
+                "ru": "",
+                "en": ""
+              }
+            }
+          ],
+          "support": {
+            "1.0": "yes",
+            "1.5": "4.8.8.3",
+            "2.0": "4.8.12.9",
+            "3.1": "5.0.1.5"
+          },
+          "note": {
+            "ru": "Регистрация ссылок vpn:// в системе не подтверждена — ключ вставляется в приложение текстом",
+            "en": "vpn:// link registration is unconfirmed — paste the key into the app as text"
+          }
+        },
+        "macos": {
+          "links": [
+            {
+              "kind": "github",
+              "url": "https://github.com/amnezia-vpn/amnezia-client/releases/latest",
+              "note": {
+                "ru": "",
+                "en": ""
+              }
+            },
+            {
+              "kind": "site",
+              "url": "https://amnezia.org/downloads",
+              "note": {
+                "ru": "",
+                "en": ""
+              }
+            }
+          ],
+          "support": {
+            "1.0": "yes",
+            "1.5": "4.8.8.3",
+            "2.0": "4.8.12.9",
+            "3.1": "5.0.1.5"
+          },
+          "note": {
+            "ru": "macOS 13+ (.pkg); сборки для macOS 10.15–12 временно недоступны",
+            "en": "macOS 13+ (.pkg); builds for macOS 10.15–12 are temporarily unavailable"
+          }
+        },
+        "linux": {
+          "links": [
+            {
+              "kind": "github",
+              "url": "https://github.com/amnezia-vpn/amnezia-client/releases/latest",
+              "note": {
+                "ru": "",
+                "en": ""
+              }
+            },
+            {
+              "kind": "site",
+              "url": "https://amnezia.org/downloads",
+              "note": {
+                "ru": "",
+                "en": ""
+              }
+            }
+          ],
+          "support": {
+            "1.0": "yes",
+            "1.5": "4.8.8.3",
+            "2.0": "4.8.12.9",
+            "3.1": "5.0.1.5"
+          },
+          "note": {
+            "ru": "",
+            "en": ""
+          }
+        }
+      },
+      "import": {
+        "conf": true,
+        "qr-conf": true,
+        "vpn": true,
+        "qr-vpn": true,
+        "deeplink": {
+          "android": "{vpn}",
+          "android_tv": "{vpn}"
+        },
+        "hint": {
+          "ru": "vpn:// — скопировать или показать QR vpn://; подойдёт и файл .conf («Файл с настройками подключения») или QR .conf. На Android ссылка vpn:// открывает приложение сама",
+          "en": "vpn:// — copy it or show the vpn:// QR; the .conf file (“Connection settings file”) or the .conf QR also work. On Android the vpn:// link opens the app by itself"
+        }
+      },
+      "subscription": {
+        "format": "vpn",
+        "once": true,
+        "lines": [
+          "3.1",
+          "2.0",
+          "1.5",
+          "1.0"
+        ],
+        "platforms": [
+          "ios",
+          "android",
+          "windows",
+          "macos",
+          "linux"
+        ],
+        "qr": "key",
+        "copy": "key",
+        "paste": {
+          "ru": "вставьте в AmneziaVPN: «+» → «Вставить» → «Продолжить»",
+          "en": "paste it in AmneziaVPN: “+” → “Insert” → “Continue”"
+        },
+        "hint": {
+          "ru": "vpn:// — скопировать ключ и вставить в AmneziaVPN, как ключ со вкладки «Статический ключ»",
+          "en": "vpn:// — copy the key and paste it into AmneziaVPN, the same way as the key from the “Static key” tab"
+        }
+      },
+      "mirror": {
+        "repo": "amnezia-vpn/amnezia-client",
+        "assets": {
+          "android": "^AmneziaVPN_[0-9.]+_android11\\+_arm64-v8a\\.apk$",
+          "windows": "^AmneziaVPN_[0-9.]+_windows_x64\\.exe$",
+          "macos": "^AmneziaVPN_[0-9.]+_macos_x64\\.pkg$",
+          "linux": "^AmneziaVPN_[0-9.]+_linux_x64\\.run$"
+        },
+        "license": "GPL-3.0",
+        "_comment": "Имена файлов релиза 5.0.1.5 (сверено с GitHub API 17.09.2026): AmneziaVPN_<v>_android11+_arm64-v8a.apk (для Android 9–10 и других ABI в релизе есть свои файлы, зеркалим один — arm64-v8a под Android 11+), AmneziaVPN_<v>_windows_x64.exe, AmneziaVPN_<v>_macos_x64.pkg, AmneziaVPN_<v>_linux_x64.run"
+      }
+    },
+    {
+      "id": "amneziawg",
+      "name": "AmneziaWG",
+      "developer": "Amnezia",
+      "official": true,
+      "license": "MIT / Apache-2.0",
+      "source": "https://github.com/amnezia-vpn/amneziawg-android",
+      "platforms": {
+        "ios": {
+          "links": [
+            {
+              "kind": "appstore",
+              "url": "https://apps.apple.com/app/id6478942365",
+              "note": {
+                "ru": "Есть в российском App Store",
+                "en": "Available in the Russian App Store"
+              }
+            }
+          ],
+          "support": {
+            "1.0": "yes",
+            "1.5": "2.0.0",
+            "2.0": "2.0.0",
+            "3.1": "3.1.4"
+          },
+          "note": {
+            "ru": "iPhone и iPad с iOS/iPadOS 15+",
+            "en": "iPhone and iPad with iOS/iPadOS 15+"
+          }
+        },
+        "android": {
+          "links": [
+            {
+              "kind": "googleplay",
+              "url": "https://play.google.com/store/apps/details?id=org.amnezia.awg",
+              "note": {
+                "ru": "В Google Play — 3.1.4 от 21.09.2026, новее выпуска на GitHub",
+                "en": "Google Play has 3.1.4 of 21.09.2026, newer than the GitHub release"
+              }
+            },
+            {
+              "kind": "github",
+              "url": "https://github.com/amnezia-vpn/amneziawg-android/releases/latest",
+              "note": {
+                "ru": "APK с GitHub: версия внутри — 3.1.20260813, линейку 3.1 тоже держит",
+                "en": "GitHub APK: the in-app version is 3.1.20260813, it also supports line 3.1"
+              }
+            }
+          ],
+          "support": {
+            "1.0": "yes",
+            "1.5": "2.0.0",
+            "2.0": "2.0.0",
+            "3.1": "3.1.4"
+          },
+          "note": {
+            "ru": "",
+            "en": ""
+          }
+        },
+        "android_tv": {
+          "links": [
+            {
+              "kind": "googleplay",
+              "url": "https://play.google.com/store/apps/details?id=org.amnezia.awg",
+              "note": {
+                "ru": "В Google Play — 3.1.4 от 21.09.2026, новее выпуска на GitHub",
+                "en": "Google Play has 3.1.4 of 21.09.2026, newer than the GitHub release"
+              }
+            },
+            {
+              "kind": "github",
+              "url": "https://github.com/amnezia-vpn/amneziawg-android/releases/latest",
+              "note": {
+                "ru": "APK ставится через файловый менеджер или adb",
+                "en": "Install the APK through a file manager or adb"
+              }
+            }
+          ],
+          "support": {
+            "1.0": "yes",
+            "1.5": "2.0.0",
+            "2.0": "2.0.0",
+            "3.1": "3.1.4"
+          },
+          "note": {
+            "ru": "На ТВ камеры нет: ключ — файлом .conf (скачать со страницы в браузере ТВ и «Импорт из файла»)",
+            "en": "A TV has no camera: add the key as a .conf file (download it from this page in the TV browser, then “Import from file”)"
+          }
+        },
+        "windows": {
+          "links": [
+            {
+              "kind": "github",
+              "url": "https://github.com/amnezia-vpn/amneziawg-windows-client/releases/latest",
+              "note": {
+                "ru": "",
+                "en": ""
+              }
+            }
+          ],
+          "support": {
+            "1.0": "yes",
+            "1.5": "2.0.0",
+            "2.0": "2.0.0",
+            "3.1": "3.1.0"
+          },
+          "note": {
+            "ru": "",
+            "en": ""
+          }
+        },
+        "macos": {
+          "links": [
+            {
+              "kind": "appstore",
+              "url": "https://apps.apple.com/app/id6478942365",
+              "note": {
+                "ru": "Тот же App Store, что у iPhone",
+                "en": "Same App Store listing as on iPhone"
+              }
+            }
+          ],
+          "support": {
+            "1.0": "yes",
+            "1.5": "2.0.0",
+            "2.0": "2.0.0",
+            "3.1": "3.1.4"
+          },
+          "note": {
+            "ru": "macOS 12+",
+            "en": "macOS 12+"
+          }
+        }
+      },
+      "import": {
+        "conf": true,
+        "qr-conf": true,
+        "vpn": false,
+        "qr-vpn": false,
+        "deeplink": {},
+        "hint": {
+          "ru": "Файл .conf или QR .conf; vpn:// это приложение не понимает",
+          "en": "The .conf file or the .conf QR; this app does not understand vpn://"
+        }
+      },
+      "subscription": {
+        "format": "conf",
+        "once": true,
+        "lines": [
+          "3.1",
+          "2.0",
+          "1.5",
+          "1.0"
+        ],
+        "platforms": [
+          "ios",
+          "android",
+          "windows",
+          "macos"
+        ],
+        "qr": "key",
+        "paste": {
+          "ru": "откройте её в браузере, сохраните файл .conf и добавьте его в AmneziaWG как файл",
+          "en": "open it in the browser, save the .conf file and add it to AmneziaWG as a file"
+        },
+        "hint": {
+          "ru": "Разово: откройте ссылку, сохраните файл .conf и добавьте его в AmneziaWG как файл — или отсканируйте QR ключа. Сам по ссылке AmneziaWG не обновляется: сменится ключ или порт — добавьте ключ заново",
+          "en": "One-time: open the link, save the .conf file and add it to AmneziaWG as a file — or scan the key QR. AmneziaWG does not refresh by the link on its own: if the key or port changes, add the key again"
+        }
+      },
+      "mirror": {
+        "repo": "amnezia-vpn/amneziawg-android",
+        "assets": {
+          "android": "^AmneziaWG-[0-9.]+\\.apk$",
+          "windows": {
+            "repo": "amnezia-vpn/amneziawg-windows-client",
+            "pattern": "^amneziawg-amd64-[0-9.]+\\.msi$"
+          }
+        },
+        "license": "MIT",
+        "_comment": "Сверено с GitHub API 17.09.2026: amneziawg-android v3.1.20260814 → AmneziaWG-3.1.202060814.apk (единственный файл); amneziawg-windows-client 3.1.0 → amneziawg-amd64-3.1.0.msi (ещё arm64 и x86 — зеркалим amd64)"
+      }
+    },
+    {
+      "id": "defaultvpn",
+      "name": "DefaultVPN",
+      "developer": "Amnezia",
+      "official": true,
+      "license": "closed",
+      "source": "",
+      "platforms": {
+        "ios": {
+          "links": [
+            {
+              "kind": "appstore",
+              "url": "https://apps.apple.com/app/id6744725017",
+              "note": {
+                "ru": "Официальный форк AmneziaVPN для российского App Store",
+                "en": "The official AmneziaVPN fork for the Russian App Store"
+              }
+            }
+          ],
+          "support": {
+            "1.0": "yes",
+            "1.5": "yes",
+            "2.0": "yes",
+            "3.1": "2.0.1"
+          },
+          "note": {
+            "ru": "iPhone и iPad с iOS/iPadOS 16+",
+            "en": "iPhone and iPad with iOS/iPadOS 16+"
+          }
+        }
+      },
+      "import": {
+        "conf": true,
+        "qr-conf": false,
+        "vpn": true,
+        "qr-vpn": true,
+        "deeplink": {},
+        "hint": {
+          "ru": "vpn:// — скопировать или показать QR vpn://; подойдёт и файл .conf",
+          "en": "vpn:// — copy it or show the vpn:// QR; the .conf file also works"
+        }
+      },
+      "subscription": {
+        "format": "vpn",
+        "once": true,
+        "lines": [
+          "3.1",
+          "2.0",
+          "1.5",
+          "1.0"
+        ],
+        "qr": "key",
+        "copy": "key",
+        "paste": {
+          "ru": "вставьте в DefaultVPN: «+» → «Вставить» → «Продолжить»",
+          "en": "paste it in DefaultVPN: “+” → “Insert” → “Continue”"
+        },
+        "hint": {
+          "ru": "vpn:// — скопировать ключ и вставить в DefaultVPN, как ключ со вкладки «Статический ключ»",
+          "en": "vpn:// — copy the key and paste it into DefaultVPN, the same way as the key from the “Static key” tab"
+        }
+      }
+    },
+    {
+      "id": "wgconnect",
+      "name": "WG Connect",
+      "developer": "Robert Hansen (HANSEN AI)",
+      "official": false,
+      "license": "closed",
+      "source": "",
+      "price": {
+        "ru": "платное после пробы",
+        "en": "paid after a trial"
+      },
+      "platforms": {
+        "tvos": {
+          "links": [
+            {
+              "kind": "appstore",
+              "url": "https://apps.apple.com/app/id6760960925",
+              "note": {
+                "ru": "Только Apple TV, tvOS 17+. Бесплатно — пробные сессии по 120 секунд, дальше разовая покупка Lifetime Access",
+                "en": "Apple TV only, tvOS 17+. Free 120-second trial sessions, then a one-time Lifetime Access purchase"
+              }
+            },
+            {
+              "kind": "site",
+              "url": "https://wgconnect.net/",
+              "note": {
+                "ru": "",
+                "en": ""
+              }
+            }
+          ],
+          "support": {
+            "1.0": "1.2.4",
+            "1.5": "unknown",
+            "2.0": "1.2.4",
+            "3.1": "1.4.0"
+          },
+          "note": {
+            "ru": "Неофициальное, платное после пробы",
+            "en": "Unofficial, paid after a trial"
+          }
+        }
+      },
+      "import": {
+        "conf": true,
+        "qr-conf": false,
+        "vpn": false,
+        "qr-vpn": false,
+        "deeplink": {},
+        "hint": {
+          "ru": "На ТВ показывается QR — телефон в той же Wi-Fi-сети отправляет файл .conf; можно вставить текст .conf или импортировать по ссылке",
+          "en": "The TV shows a QR — a phone on the same Wi-Fi sends the .conf file; you can also paste the .conf text or import it by URL"
+        }
+      }
+    },
+    {
+      "id": "incy",
+      "name": "incy",
+      "developer": "ITDev",
+      "official": false,
+      "license": "closed",
+      "source": "",
+      "platforms": {
+        "ios": {
+          "links": [
+            {
+              "kind": "appstore",
+              "url": "https://apps.apple.com/app/id6756943388",
+              "note": {
+                "ru": "",
+                "en": ""
+              }
+            }
+          ],
+          "support": {
+            "1.0": "yes",
+            "1.5": "yes",
+            "2.0": "yes",
+            "3.1": "yes"
+          },
+          "note": {
+            "ru": "iPhone и iPad с iOS/iPadOS 15+",
+            "en": "iPhone and iPad with iOS/iPadOS 15+"
+          }
+        },
+        "android": {
+          "links": [
+            {
+              "kind": "googleplay",
+              "url": "https://play.google.com/store/apps/details?id=llc.itdev.incy",
+              "note": {
+                "ru": "Наличие в российском Google Play не подтверждено",
+                "en": "Availability in the Russian Google Play is unconfirmed"
+              }
+            },
+            {
+              "kind": "github",
+              "url": "https://github.com/INCY-DEV/incy-platforms/releases/latest",
+              "note": {
+                "ru": "APK с GitHub разработчика, если Google Play недоступен",
+                "en": "APK from the developer's GitHub when Google Play is unavailable"
+              }
+            }
+          ],
+          "support": {
+            "1.0": "yes",
+            "1.5": "yes",
+            "2.0": "yes",
+            "3.1": "yes"
+          },
+          "note": {
+            "ru": "",
+            "en": ""
+          }
+        },
+        "android_tv": {
+          "links": [
+            {
+              "kind": "googleplay",
+              "url": "https://play.google.com/store/apps/details?id=llc.itdev.incy",
+              "note": {
+                "ru": "",
+                "en": ""
+              }
+            },
+            {
+              "kind": "github",
+              "url": "https://github.com/INCY-DEV/incy-platforms/releases/latest",
+              "note": {
+                "ru": "APK с GitHub разработчика, если Google Play недоступен",
+                "en": "APK from the developer's GitHub when Google Play is unavailable"
+              }
+            }
+          ],
+          "support": {
+            "1.0": "yes",
+            "1.5": "yes",
+            "2.0": "yes",
+            "3.1": "yes"
+          },
+          "note": {
+            "ru": "На телевизоре — «Отправить на ТВ» из incy на телефоне",
+            "en": "On a TV — “Send to TV” from incy on the phone"
+          }
+        },
+        "tvos": {
+          "links": [
+            {
+              "kind": "appstore",
+              "url": "https://apps.apple.com/app/id6756943388",
+              "note": {
+                "ru": "Тот же App Store, что у iPhone; tvOS 17+",
+                "en": "Same App Store listing as on iPhone; tvOS 17+"
+              }
+            }
+          ],
+          "support": {
+            "1.0": "unknown",
+            "1.5": "unknown",
+            "2.0": "unknown",
+            "3.1": "unknown"
+          },
+          "note": {
+            "ru": "Работа AmneziaWG на Apple TV источником не подтверждена",
+            "en": "Whether AmneziaWG works on Apple TV is not confirmed by any source"
+          },
+          "hint": {
+            "ru": "Камеры на ТВ нет — ключ передаёт телефон: в incy на Apple TV откройте «TV relay», появятся 8-значный код и QR; в incy на телефоне введите код или отсканируйте QR",
+            "en": "The TV has no camera, so the phone sends the key: open «TV relay» in incy on Apple TV to see an 8-character code and a QR, then enter the code or scan the QR in incy on the phone"
+          }
+        },
+        "macos": {
+          "links": [
+            {
+              "kind": "appstore",
+              "url": "https://apps.apple.com/app/id6756943388",
+              "note": {
+                "ru": "То же приложение из App Store, только Mac на Apple M1 и новее",
+                "en": "The same App Store app, Apple M1 or newer Macs only"
+              }
+            }
+          ],
+          "support": {
+            "1.0": "yes",
+            "1.5": "yes",
+            "2.0": "yes",
+            "3.1": "yes"
+          },
+          "note": {
+            "ru": "macOS 12+ на Apple Silicon. Сборки incy для Mac с GitHub (pre-alpha) AmneziaWG не поддерживают — нужна версия из App Store",
+            "en": "macOS 12+ on Apple Silicon. The incy Mac builds from GitHub (pre-alpha) do not support AmneziaWG — use the App Store version"
+          }
+        }
+      },
+      "import": {
+        "conf": true,
+        "qr-conf": true,
+        "vpn": false,
+        "qr-vpn": false,
+        "deeplink": {
+          "ios": "incy://import/{conf_base64}",
+          "android": "incy://import/{conf_base64}",
+          "android_tv": "incy://import/{conf_base64}"
+        },
+        "hint": {
+          "ru": ".conf, QR .conf или одним нажатием «Открыть в приложении»",
+          "en": ".conf, the .conf QR or one tap on “Open in the app”"
+        }
+      },
+      "subscription": {
+        "format": "txt",
+        "deeplink": "incy://add/{url}",
+        "update_hours": 0,
+        "recommended": [
+          "ios",
+          "android_tv",
+          "tvos"
+        ],
+        "qr": "deeplink",
+        "qr_alt": "url",
+        "paste": {
+          "ru": "добавьте в incy: «Добавить» → вставьте ссылку",
+          "en": "add it in incy: Add → paste the link"
+        },
+        "hint": {
+          "ru": "На телефоне с incy — «Открыть в incy»: подписка добавится сама. С другого устройства — QR: обычной камерой телефона или сканером в incy («Добавить» → значок QR). На телевизоре — «Отправить на ТВ» из incy на телефоне",
+          "en": "On a phone with incy — “Open in incy”: the subscription is added by itself. From another device — the QR: with the regular phone camera or the scanner in incy (Add → the QR icon). On a TV — “Send to TV” from incy on the phone"
+        }
+      },
+      "_comment": "Подписка — all.txt по документации incy (docs.incy.cc/en/subscription-format, «Multiple AmneziaWG servers in one subscription»): строка amneziawg://<base64url .conf, «=» необязательны>#<имя> на линию; По документации AmneziaWG в подписке — только iOS и Android; решение владельца 04.10.2026 — incy на всех своих платформах с пометками каталога (macOS — версия из App Store на Apple Silicon, Apple TV — не подтверждено, Android TV — «Отправить на ТВ» из incy на телефоне). Живая проверка 04.10.2026 (Android): ссылка incy://add/<адрес> добавила awg31 и awg20 и подключилась на обеих, поля 3.x из .conf приняты; QR со ссылкой incy:// читает обычная камера телефона, сканер внутри incy — нет («Expected URL scheme 'http' or 'https' but was 'incy'»), зато голый адрес https он берёт: второй QR (qr_alt)."
+    },
+    {
+      "id": "wgtunnel",
+      "name": "WG Tunnel",
+      "developer": "Zane Schepke",
+      "official": false,
+      "license": "MIT",
+      "source": "https://github.com/wgtunnel/android",
+      "platforms": {
+        "android": {
+          "links": [
+            {
+              "kind": "googleplay",
+              "url": "https://play.google.com/store/apps/details?id=com.zaneschepke.wireguardautotunnel",
+              "note": {
+                "ru": "",
+                "en": ""
+              }
+            },
+            {
+              "kind": "github",
+              "url": "https://github.com/wgtunnel/android/releases/latest",
+              "note": {
+                "ru": "",
+                "en": ""
+              }
+            },
+            {
+              "kind": "izzy",
+              "url": "https://apt.izzysoft.de/fdroid/index/apk/com.zaneschepke.wireguardautotunnel",
+              "note": {
+                "ru": "",
+                "en": ""
+              }
+            }
+          ],
+          "support": {
+            "1.0": "3.4.3",
+            "1.5": "yes",
+            "2.0": "4.2.0",
+            "3.1": "5.6.0"
+          },
+          "note": {
+            "ru": "",
+            "en": ""
+          }
+        },
+        "android_tv": {
+          "links": [
+            {
+              "kind": "googleplay",
+              "url": "https://play.google.com/store/apps/details?id=com.zaneschepke.wireguardautotunnel",
+              "note": {
+                "ru": "",
+                "en": ""
+              }
+            },
+            {
+              "kind": "github",
+              "url": "https://github.com/wgtunnel/android/releases/latest",
+              "note": {
+                "ru": "",
+                "en": ""
+              }
+            }
+          ],
+          "support": {
+            "1.0": "3.4.3",
+            "1.5": "yes",
+            "2.0": "4.2.0",
+            "3.1": "5.6.0"
+          },
+          "note": {
+            "ru": "На ТВ камеры нет: ключ — файлом .conf",
+            "en": "A TV has no camera: add the key as a .conf file"
+          }
+        }
+      },
+      "import": {
+        "conf": true,
+        "qr-conf": true,
+        "vpn": false,
+        "qr-vpn": false,
+        "deeplink": {},
+        "hint": {
+          "ru": "Файл .conf или QR .conf",
+          "en": "The .conf file or the .conf QR"
+        }
+      },
+      "subscription": {
+        "format": "conf",
+        "once": true,
+        "lines": [
+          "3.1",
+          "2.0",
+          "1.5",
+          "1.0"
+        ],
+        "deeplink": "wg://{host_path}",
+        "qr": "key",
+        "paste": {
+          "ru": "вставьте в WG Tunnel: «+» → «Добавить из URL»",
+          "en": "paste it in WG Tunnel: + → “Add from URL”"
+        },
+        "hint": {
+          "ru": "Разово: на этом телефоне — «Открыть в WG Tunnel», он сам скачает .conf линии по ссылке; или «+» → «Добавить из URL» и вставьте ссылку; с другого устройства — QR ключа: «+» → «Добавить из QR-кода». Сам по ссылке WG Tunnel не обновляется: сменится ключ или порт — добавьте ключ заново",
+          "en": "One-time: on this phone — “Open in WG Tunnel”, it downloads the line's .conf by the link itself; or + → “Add from URL” and paste the link; from another device — the key QR: + → “Add from QR code”. WG Tunnel does not refresh by the link on its own: if the key or port changes, add the key again"
+        }
+      },
+      "mirror": {
+        "repo": "wgtunnel/android",
+        "assets": {
+          "android": "^wgtunnel-standalone-v[0-9.]+\\.apk$"
+        },
+        "license": "MIT",
+        "_comment": "Сверено с GitHub API 17.09.2026: релиз 5.7.2 несёт wgtunnel-standalone-v5.7.2.apk (универсальная), -arm64/-armv7 и fdroid-варианты — зеркалим универсальную standalone"
+      }
+    },
+    {
+      "id": "v2raytun",
+      "name": "v2RayTun",
+      "developer": "v2RayTun",
+      "official": false,
+      "license": "closed",
+      "source": "",
+      "platforms": {
+        "android": {
+          "links": [
+            {
+              "kind": "googleplay",
+              "url": "https://play.google.com/store/apps/details?id=com.v2raytun.android",
+              "note": {
+                "ru": "",
+                "en": ""
+              }
+            },
+            {
+              "kind": "github",
+              "url": "https://github.com/LXST-CODE/v2RayTun/releases",
+              "note": {
+                "ru": "APK в выпусках android-v…",
+                "en": "APK in the android-v… releases"
+              }
+            }
+          ],
+          "support": {
+            "1.0": "unknown",
+            "1.5": "unknown",
+            "2.0": "5.24.76",
+            "3.1": "no"
+          },
+          "note": {
+            "ru": "AmneziaWG 3.x не поддерживается: запрос #5 от 08.08.2026 открыт",
+            "en": "AmneziaWG 3.x is not supported: request #5 of 08.08.2026 is still open"
+          }
+        },
+        "android_tv": {
+          "links": [
+            {
+              "kind": "googleplay",
+              "url": "https://play.google.com/store/apps/details?id=com.v2raytun.android",
+              "note": {
+                "ru": "",
+                "en": ""
+              }
+            },
+            {
+              "kind": "github",
+              "url": "https://github.com/LXST-CODE/v2RayTun/releases",
+              "note": {
+                "ru": "APK ставится через файловый менеджер или adb",
+                "en": "Install the APK through a file manager or adb"
+              }
+            }
+          ],
+          "support": {
+            "1.0": "unknown",
+            "1.5": "unknown",
+            "2.0": "5.24.76",
+            "3.1": "no"
+          },
+          "note": {
+            "ru": "AmneziaWG 3.x не поддерживается: запрос #5 от 08.08.2026 открыт",
+            "en": "AmneziaWG 3.x is not supported: request #5 of 08.08.2026 is still open"
+          }
+        },
+        "windows": {
+          "links": [
+            {
+              "kind": "github",
+              "url": "https://github.com/LXST-CODE/v2RayTun/releases",
+              "note": {
+                "ru": "Установщик в выпусках windows-v…",
+                "en": "Installer in the windows-v… releases"
+              }
+            }
+          ],
+          "support": {
+            "1.0": "unknown",
+            "1.5": "unknown",
+            "2.0": "3.9.13",
+            "3.1": "no"
+          },
+          "note": {
+            "ru": "AmneziaWG 3.x не поддерживается: запрос #5 от 08.08.2026 открыт",
+            "en": "AmneziaWG 3.x is not supported: request #5 of 08.08.2026 is still open"
+          }
+        }
+      },
+      "import": {
+        "conf": true,
+        "qr-conf": true,
+        "vpn": false,
+        "qr-vpn": false,
+        "deeplink": {},
+        "hint": {
+          "ru": "Файл .conf или QR .conf",
+          "en": "The .conf file or the .conf QR"
+        }
+      }
+    },
+    {
+      "id": "wiresock",
+      "name": "WireSock Secure Connect",
+      "developer": "Vadim Smirnov",
+      "official": false,
+      "license": "closed",
+      "source": "",
+      "platforms": {
+        "windows": {
+          "links": [
+            {
+              "kind": "site",
+              "url": "https://www.wiresock.net/wiresock-secure-connect/download",
+              "note": {
+                "ru": "",
+                "en": ""
+              }
+            }
+          ],
+          "support": {
+            "1.0": "2.2.1.1",
+            "1.5": "3.4.5.1",
+            "2.0": "3.4.5.1",
+            "3.1": "no"
+          },
+          "note": {
+            "ru": "I1–I5 не поддерживает: с 3.4.5.1 пропускает их молча — ключ работает без сигнатурных пакетов (у WireSock своя имитация протоколов). Ключ 2.0 без I1 (пресет router) — с 3.4.4.1",
+            "en": "No I1–I5: since 3.4.5.1 it silently skips them — the key works without signature packets (WireSock has its own protocol imitation). A 2.0 key without I1 (router preset) works from 3.4.4.1"
+          }
+        }
+      },
+      "import": {
+        "conf": true,
+        "qr-conf": false,
+        "vpn": false,
+        "qr-vpn": false,
+        "deeplink": {},
+        "hint": {
+          "ru": "Файл .conf",
+          "en": "The .conf file"
+        }
+      }
+    },
+    {
+      "id": "amneziawg-tools",
+      "name": "amneziawg-tools",
+      "developer": "Amnezia",
+      "official": true,
+      "license": "GPL-2.0",
+      "source": "https://github.com/amnezia-vpn/amneziawg-tools",
+      "platforms": {
+        "linux": {
+          "links": [
+            {
+              "kind": "github",
+              "url": "https://github.com/amnezia-vpn/amneziawg-tools",
+              "note": {
+                "ru": "",
+                "en": ""
+              }
+            },
+            {
+              "kind": "site",
+              "url": "https://docs.amnezia.org/documentation/amnezia-wg/",
+              "note": {
+                "ru": "",
+                "en": ""
+              }
+            }
+          ],
+          "support": {
+            "1.0": "yes",
+            "1.5": "yes",
+            "2.0": "yes",
+            "3.1": "3.1.20260812"
+          },
+          "note": {
+            "ru": "Для 3.1 нужны amneziawg-go или модуль ядра линейки 3.1",
+            "en": "Line 3.1 needs amneziawg-go or a kernel module of line 3.1"
+          }
+        }
+      },
+      "import": {
+        "conf": true,
+        "qr-conf": false,
+        "vpn": false,
+        "qr-vpn": false,
+        "deeplink": {},
+        "hint": {
+          "ru": "Файл .conf → awg-quick up",
+          "en": "The .conf file → awg-quick up"
+        }
+      }
+    },
+    {
+      "id": "keenetic",
+      "name": "Keenetic / Netcraze",
+      "developer": "Keenetic",
+      "official": false,
+      "license": "closed",
+      "source": "",
+      "platforms": {
+        "router": {
+          "links": [
+            {
+              "kind": "site",
+              "url": "https://docs.amnezia.org/documentation/instructions/keenetic-os-awg/",
+              "note": {
+                "ru": "Инструкция Amnezia",
+                "en": "Amnezia instructions"
+              }
+            }
+          ],
+          "support": {
+            "1.0": "4.2",
+            "1.5": "5.1.1",
+            "2.0": "5.1.1",
+            "3.1": "no"
+          },
+          "note": {
+            "ru": "1.5/2.0 — со стабильной 5.1.1 (в канале разработчика — с 5.1 Alpha 3), лучше 5.1.3+; на 5.0.8 и старше импорт падает с «invalid H1 value». Ключи 1.5/2.0 импортируются: сигнатурный пакет I1 начинается с <b …>. Ключ, скачанный раньше (I1 начинается с <r 2>, импорт падает с «invalid I1 value»), скачайте заново после обновления. 3.1 — пока только в dev-прошивке (канал разработчиков)",
+            "en": "1.5/2.0 need stable 5.1.1 (dev channel: 5.1 Alpha 3), better 5.1.3+; on 5.0.8 and older the import fails with “invalid H1 value”. 1.5/2.0 keys import: the I1 signature packet starts with <b …>. A key downloaded earlier (I1 starts with <r 2>, the import fails with “invalid I1 value”) — download it again after the update. 3.1 only in dev firmware (developer channel) so far"
+          }
+        }
+      },
+      "import": {
+        "conf": true,
+        "qr-conf": false,
+        "vpn": false,
+        "qr-vpn": false,
+        "deeplink": {},
+        "hint": {
+          "ru": "Файл .conf («Загрузить из файла»)",
+          "en": "The .conf file (“Load from file”)"
+        }
+      },
+      "subscription": {
+        "format": "conf",
+        "once": true,
+        "lines": [
+          "2.0",
+          "1.5",
+          "1.0"
+        ],
+        "command": "interface {iface} wireguard import {url}",
+        "recommended": [
+          "router"
+        ],
+        "qr": "",
+        "copy": "command",
+        "paste": {
+          "ru": "вставьте в командную строку роутера (my.keenetic.net/a), затем выполните system configuration save",
+          "en": "paste it into the router command line (my.keenetic.net/a), then run system configuration save"
+        },
+        "hint": {
+          "ru": "KeeneticOS 5.2 (пока канал разработчиков, с 5.2 Alpha 1): в командной строке роутера (my.keenetic.net/a) — команда ниже, затем system configuration save. Разово: роутер заберёт ключ один раз и сам его не обновит — сменится ключ или порт, повторите. Нет 5.2 — откройте ссылку, сохраните файл .conf и загрузите его: «Загрузить из файла». AmneziaWG 3.1 — пока только в dev-прошивке",
+          "en": "KeeneticOS 5.2 (development channel for now, since 5.2 Alpha 1): in the router command line (my.keenetic.net/a) — the command below, then system configuration save. One-time: the router takes the key once and never refreshes it — if the key or port changes, repeat it. No 5.2 — open the link, save the .conf file and upload it: “Load from file”. AmneziaWG 3.1 only in dev firmware so far"
+        }
+      },
+      "_comment": "Подписка — разовый импорт по ссылке (сверено 04.10.2026 по выпускам KeeneticOS 5.2 на support.keenetic.com: NDM-4555, «interface {name} wireguard import {url}», с 5.2 Alpha 1 от 18.07.2026; 5.2 — канал разработчиков, Beta 0 от 02.10.2026). Повторного забора по ссылке в выпусках нет."
+    },
+    {
+      "id": "awgm",
+      "name": "AWG Manager",
+      "developer": "hoaxisr",
+      "official": false,
+      "license": "MIT",
+      "source": "https://github.com/hoaxisr/awg-manager",
+      "static": false,
+      "platforms": {
+        "router": {
+          "links": [
+            {
+              "kind": "github",
+              "url": "https://github.com/hoaxisr/awg-manager",
+              "note": {
+                "ru": "Установка — по README: Keenetic с Entware (OPKG) и компонентом WireGuard",
+                "en": "Install per the README: Keenetic with Entware (OPKG) and the WireGuard component"
+              }
+            }
+          ],
+          "support": {
+            "1.0": "yes",
+            "1.5": "yes",
+            "2.0": "yes",
+            "3.1": "yes"
+          },
+          "note": {
+            "ru": "Keenetic с Entware: веб-интерфейс туннелей AmneziaWG 1.0–3.1; 3.1 — в режиме Kernel",
+            "en": "Keenetic with Entware: a web UI for AmneziaWG 1.0–3.1 tunnels; 3.1 in the Kernel mode"
+          }
+        }
+      },
+      "import": {
+        "conf": true,
+        "qr-conf": false,
+        "vpn": true,
+        "qr-vpn": false,
+        "deeplink": {},
+        "hint": {
+          "ru": "Ключ vpn:// или текст .conf: «Новый туннель» → «Вставить ссылку» или «Вставить текст»",
+          "en": "A vpn:// key or the .conf text: New tunnel → “Paste link” or “Paste text”"
+        }
+      },
+      "subscription": [
+        {
+          "format": "txt",
+          "variant": {
+            "ru": "Все линии .txt",
+            "en": "All lines .txt"
+          },
+          "update_hours": 0,
+          "qr": "",
+          "paste": {
+            "ru": "вставьте в AWG Manager: «Подписка по URL»",
+            "en": "paste it in AWG Manager: “Subscription by URL”"
+          },
+          "hint": {
+            "ru": "AWG Manager: «Подписка по URL» — вставьте ссылку, туннели всех линий обновятся сами. Поддержку такой подписки добавляет разработчик AWG Manager: нет пункта «Подписка по URL» — обновите AWG Manager или возьмите «Ключ vpn://»",
+            "en": "AWG Manager: “Subscription by URL” — paste the link, the tunnels of every line refresh by themselves. The AWG Manager developer is adding this subscription: no “Subscription by URL” item — update AWG Manager or take the “vpn:// key”"
+          }
+        },
+        {
+          "format": "vpn",
+          "variant": {
+            "ru": "Ключ vpn://",
+            "en": "vpn:// key"
+          },
+          "once": true,
+          "lines": [
+            "3.1",
+            "2.0",
+            "1.5",
+            "1.0"
+          ],
+          "qr": "",
+          "copy": "key",
+          "line_note": {
+            "ru": "Для 3.1 — режим Kernel, 2.0 работает в любом",
+            "en": "3.1 needs the Kernel mode, 2.0 works in either"
+          },
+          "paste": {
+            "ru": "вставьте в AWG Manager: «Новый туннель» → «Вставить ссылку» → «Импортировать»",
+            "en": "paste it in AWG Manager: New tunnel → “Paste link” → “Import”"
+          },
+          "hint": {
+            "ru": "Разово, по туннелю на линию: «Новый туннель» → «Вставить ссылку» — ключ vpn:// → «Импортировать»; «Режим работы» для 3.1 — Kernel. Сменится ключ или порт — добавьте заново",
+            "en": "One-time, a tunnel per line: New tunnel → “Paste link” — the vpn:// key → “Import”; the “Mode” for 3.1 is Kernel. If the key or port changes, add it again"
+          }
+        },
+        {
+          "format": "conf",
+          "variant": {
+            "ru": "Файл .conf",
+            "en": ".conf file"
+          },
+          "once": true,
+          "lines": [
+            "3.1",
+            "2.0",
+            "1.5",
+            "1.0"
+          ],
+          "qr": "",
+          "copy": "key",
+          "line_note": {
+            "ru": "Для 3.1 — режим Kernel, 2.0 работает в любом",
+            "en": "3.1 needs the Kernel mode, 2.0 works in either"
+          },
+          "paste": {
+            "ru": "вставьте в AWG Manager: «Новый туннель» → «Вставить текст» → «Импортировать»",
+            "en": "paste it in AWG Manager: New tunnel → “Paste text” → “Import”"
+          },
+          "hint": {
+            "ru": "Разово, по туннелю на линию: «Новый туннель» → «Вставить текст» — текст .conf (или «Загрузить файл» — скачанный .conf) → «Импортировать»; «Режим работы» для 3.1 — Kernel. Сменится ключ или порт — добавьте заново",
+            "en": "One-time, a tunnel per line: New tunnel → “Paste text” — the .conf text (or “Upload file” — the downloaded .conf) → “Import”; the “Mode” for 3.1 is Kernel. If the key or port changes, add it again"
+          }
+        }
+      ],
+      "_comment": "Сверено 04.10.2026 по исходникам hoaxisr/awg-manager (ветка develop, выпуск v2.19.12 от 29.09.2026, MIT): «Новый туннель» — вкладки «Загрузить файл», «Вставить текст», «Вставить ссылку» (vpn://), кнопка «Импортировать»; «Режим работы» — NativeWG или Kernel («Через OpkgTun и модуль ядра, с поддержкой до AWG 3.1»). Подписку по URL (all.txt) разработчик добавляет по договорённости с владельцем (04.10.2026)."
+    },
+    {
+      "id": "glinet",
+      "name": "GL.iNet",
+      "developer": "GL.iNet",
+      "official": false,
+      "license": "closed",
+      "source": "",
+      "platforms": {
+        "router": {
+          "links": [
+            {
+              "kind": "site",
+              "url": "https://docs.gl-inet.com/router/en/4/faq/amneziawg_obfuscation/",
+              "note": {
+                "ru": "Какие параметры AmneziaWG понимает прошивка",
+                "en": "Which AmneziaWG parameters the firmware understands"
+              }
+            },
+            {
+              "kind": "site",
+              "url": "https://docs.gl-inet.com/router/en/4/tutorials/how_to_set_up_vpn_obfuscation_on_glinet_routers/",
+              "note": {
+                "ru": "Инструкция: загрузить .conf в WireGuard Client",
+                "en": "How-to: upload the .conf into WireGuard Client"
+              }
+            }
+          ],
+          "support": {
+            "1.0": "4.9",
+            "1.5": "4.9",
+            "2.0": "4.9",
+            "3.1": "no"
+          },
+          "note": {
+            "ru": "Прошивка 4.9+; 3.x не заявлена",
+            "en": "Firmware 4.9+; 3.x is not announced"
+          }
+        }
+      },
+      "import": {
+        "conf": true,
+        "qr-conf": false,
+        "vpn": false,
+        "qr-vpn": false,
+        "deeplink": {},
+        "hint": {
+          "ru": "Файл .conf («Загрузить из файла»)",
+          "en": "The .conf file (“Load from file”)"
+        }
+      }
+    },
+    {
+      "id": "openwrt",
+      "name": "OpenWrt (amneziawg)",
+      "developer": "OpenWrt community",
+      "official": false,
+      "license": "GPL-2.0",
+      "source": "https://github.com/2Grey/awg-openwrt",
+      "platforms": {
+        "router": {
+          "links": [
+            {
+              "kind": "github",
+              "url": "https://github.com/2Grey/awg-openwrt",
+              "note": {
+                "ru": "Сборки AmneziaWG 3.1 для OpenWrt 24.10 и 25.12",
+                "en": "AmneziaWG 3.1 builds for OpenWrt 24.10 and 25.12"
+              }
+            },
+            {
+              "kind": "github",
+              "url": "https://github.com/Slava-Shchipunov/awg-openwrt",
+              "note": {
+                "ru": "Сборки из инструкции Amnezia: 2.0 для 23.05.6–25.12.4, 3.1 — для 24.10.8 и 25.12.5",
+                "en": "The builds from Amnezia's guide: 2.0 for 23.05.6–25.12.4, 3.1 for 24.10.8 and 25.12.5"
+              }
+            },
+            {
+              "kind": "site",
+              "url": "https://docs.amnezia.org/documentation/instructions/openwrt-os-awg/",
+              "note": {
+                "ru": "Инструкция Amnezia",
+                "en": "Amnezia instructions"
+              }
+            }
+          ],
+          "support": {
+            "1.0": "yes",
+            "1.5": "yes",
+            "2.0": "yes",
+            "3.1": "yes"
+          },
+          "note": {
+            "ru": "Официальной ленты пакетов OpenWrt нет — только сборки сообщества. 3.1 — только на OpenWrt 24.10/25.12 со сборками AWG 3.1",
+            "en": "No official OpenWrt feed — community builds only. 3.1 only on OpenWrt 24.10/25.12 with AWG 3.1 builds"
+          }
+        }
+      },
+      "import": {
+        "conf": true,
+        "qr-conf": false,
+        "vpn": false,
+        "qr-vpn": false,
+        "deeplink": {},
+        "hint": {
+          "ru": "Файл .conf: LuCI → Network → Interfaces → «Load configuration»",
+          "en": "The .conf file: LuCI → Network → Interfaces → “Load configuration”"
+        }
+      }
+    },
+    {
+      "id": "mikrotik",
+      "name": "MikroTik (контейнер)",
+      "name_en": "MikroTik (container)",
+      "developer": "timbrs",
+      "official": false,
+      "license": "MIT",
+      "source": "https://github.com/timbrs/amneziawg-mikrotik-c",
+      "platforms": {
+        "router": {
+          "links": [
+            {
+              "kind": "github",
+              "url": "https://github.com/timbrs/amneziawg-mikrotik-c",
+              "note": {
+                "ru": "Контейнер AmneziaWG для RouterOS",
+                "en": "An AmneziaWG container for RouterOS"
+              }
+            },
+            {
+              "kind": "site",
+              "url": "https://timbrs.github.io/amneziawg-mikrotik-c/conf3.0.html",
+              "note": {
+                "ru": "Конфигуратор: вставить .conf — получить команды",
+                "en": "Configurator: paste the .conf, get the commands"
+              }
+            }
+          ],
+          "support": {
+            "1.0": "yes",
+            "1.5": "yes",
+            "2.0": "yes",
+            "3.1": "1.2.5"
+          },
+          "note": {
+            "ru": "Версии — самого контейнера. Нужна RouterOS 7.4+ с пакетом container; своей поддержки AmneziaWG в RouterOS нет",
+            "en": "Versions are the container's. Needs RouterOS 7.4+ with the container package; RouterOS itself has no AmneziaWG support"
+          }
+        }
+      },
+      "import": {
+        "conf": true,
+        "qr-conf": false,
+        "vpn": false,
+        "qr-vpn": false,
+        "deeplink": {},
+        "hint": {
+          "ru": "Файл .conf — в конфигуратор timbrs.github.io, он выдаёт команды RouterOS",
+          "en": "The .conf file — into the timbrs.github.io configurator, it prints RouterOS commands"
+        }
+      }
+    },
+    {
+      "id": "opnsense",
+      "name": "OPNsense (плагин AmneziaWG)",
+      "name_en": "OPNsense (AmneziaWG plugin)",
+      "developer": "nvk86",
+      "official": false,
+      "license": "BSD-2-Clause",
+      "source": "https://github.com/nvk86/opnsense-awg-plugin",
+      "platforms": {
+        "router": {
+          "links": [
+            {
+              "kind": "github",
+              "url": "https://github.com/nvk86/opnsense-awg-plugin",
+              "note": {
+                "ru": "Плагин клиента и сервера AmneziaWG для OPNsense 26.7",
+                "en": "AmneziaWG client and server plugin for OPNsense 26.7"
+              }
+            }
+          ],
+          "support": {
+            "1.0": "unknown",
+            "1.5": "unknown",
+            "2.0": "yes",
+            "3.1": "yes"
+          },
+          "note": {
+            "ru": "Нужна OPNsense 26.7.x (FreeBSD 15.1); 3.1 с совместимостью с конфигами 2.x",
+            "en": "Needs OPNsense 26.7.x (FreeBSD 15.1); 3.1 with compatibility for 2.x configs"
+          }
+        }
+      },
+      "import": {
+        "conf": true,
+        "qr-conf": false,
+        "vpn": false,
+        "qr-vpn": false,
+        "deeplink": {},
+        "hint": {
+          "ru": "Файл .conf: Import → Parse & Fill",
+          "en": "The .conf file: Import → Parse & Fill"
+        }
+      }
+    },
+    {
+      "id": "flclash",
+      "name": "FlClash",
+      "developer": "chen08209",
+      "official": false,
+      "license": "GPL-3.0",
+      "source": "https://github.com/chen08209/FlClash",
+      "static": false,
+      "platforms": {
+        "android": {
+          "links": [
+            {
+              "kind": "github",
+              "url": "https://github.com/chen08209/FlClash/releases/latest",
+              "note": {
+                "ru": "APK под ваш телефон — чаще всего arm64-v8a",
+                "en": "The APK for your phone — usually arm64-v8a"
+              }
+            }
+          ],
+          "support": {
+            "1.0": "0.8.65",
+            "1.5": "0.8.88",
+            "2.0": "0.8.95",
+            "3.1": "0.8.99"
+          },
+          "note": {
+            "ru": "Ядро mihomo внутри: AmneziaWG 3.1 — с 0.8.99 (03.10.2026), 2.0 без сбоя на большом S4 — с 0.8.95",
+            "en": "Built-in mihomo core: AmneziaWG 3.1 since 0.8.99 (03.10.2026), 2.0 without the large-S4 crash since 0.8.95"
+          }
+        },
+        "windows": {
+          "links": [
+            {
+              "kind": "github",
+              "url": "https://github.com/chen08209/FlClash/releases/latest",
+              "note": {
+                "ru": "Установщик windows-amd64-setup.exe (arm64 — для ARM)",
+                "en": "The windows-amd64-setup.exe installer (arm64 for ARM)"
+              }
+            }
+          ],
+          "support": {
+            "1.0": "0.8.65",
+            "1.5": "0.8.88",
+            "2.0": "0.8.95",
+            "3.1": "0.8.99"
+          },
+          "note": {
+            "ru": "Ядро mihomo внутри: AmneziaWG 3.1 — с 0.8.99 (03.10.2026), 2.0 без сбоя на большом S4 — с 0.8.95",
+            "en": "Built-in mihomo core: AmneziaWG 3.1 since 0.8.99 (03.10.2026), 2.0 without the large-S4 crash since 0.8.95"
+          }
+        },
+        "macos": {
+          "links": [
+            {
+              "kind": "github",
+              "url": "https://github.com/chen08209/FlClash/releases/latest",
+              "note": {
+                "ru": "DMG: macos-arm64 — Apple Silicon, macos-amd64 — Intel",
+                "en": "DMG: macos-arm64 for Apple Silicon, macos-amd64 for Intel"
+              }
+            }
+          ],
+          "support": {
+            "1.0": "0.8.65",
+            "1.5": "0.8.88",
+            "2.0": "0.8.95",
+            "3.1": "0.8.99"
+          },
+          "note": {
+            "ru": "Ядро mihomo внутри: AmneziaWG 3.1 — с 0.8.99 (03.10.2026), 2.0 без сбоя на большом S4 — с 0.8.95",
+            "en": "Built-in mihomo core: AmneziaWG 3.1 since 0.8.99 (03.10.2026), 2.0 without the large-S4 crash since 0.8.95"
+          }
+        },
+        "linux": {
+          "links": [
+            {
+              "kind": "github",
+              "url": "https://github.com/chen08209/FlClash/releases/latest",
+              "note": {
+                "ru": "AppImage, deb или rpm",
+                "en": "AppImage, deb or rpm"
+              }
+            }
+          ],
+          "support": {
+            "1.0": "0.8.65",
+            "1.5": "0.8.88",
+            "2.0": "0.8.95",
+            "3.1": "0.8.99"
+          },
+          "note": {
+            "ru": "Ядро mihomo внутри: AmneziaWG 3.1 — с 0.8.99 (03.10.2026), 2.0 без сбоя на большом S4 — с 0.8.95",
+            "en": "Built-in mihomo core: AmneziaWG 3.1 since 0.8.99 (03.10.2026), 2.0 without the large-S4 crash since 0.8.95"
+          }
+        }
+      },
+      "import": {
+        "conf": false,
+        "qr-conf": false,
+        "vpn": false,
+        "qr-vpn": false,
+        "deeplink": {},
+        "hint": {
+          "ru": "Только подписка: профиль mihomo по ссылке",
+          "en": "Subscription only: a mihomo profile by link"
+        }
+      },
+      "subscription": {
+        "format": "mihomo",
+        "deeplink": "flclash://install-config?url={url}",
+        "update_hours": 24,
+        "recommended": [
+          "android"
+        ],
+        "qr": "url",
+        "paste": {
+          "ru": "вставьте в FlClash: «Профили» → «+» → «URL», затем «Отправить»",
+          "en": "paste it in FlClash: Profiles → + → URL, then Submit"
+        },
+        "hint": {
+          "ru": "«Профили» → «+» → «URL»: вставьте ссылку и нажмите «Отправить»; с другого телефона — «QR-код». Обновляет профиль раз в сутки — чаще можно в свойствах профиля («Автообновление»)",
+          "en": "Profiles → + → URL: paste the link and tap Submit; from another phone — QR code. It refreshes the profile once a day — more often in the profile settings (Auto update)"
+        }
+      },
+      "mirror": {
+        "repo": "chen08209/FlClash",
+        "assets": {
+          "android": "^FlClash-[0-9.]+-android-arm64-v8a\\.apk$",
+          "windows": "^FlClash-[0-9.]+-windows-amd64-setup\\.exe$",
+          "macos": "^FlClash-[0-9.]+-macos-amd64\\.dmg$",
+          "linux": "^FlClash-[0-9.]+-linux-amd64\\.AppImage$"
+        },
+        "license": "GPL-3.0",
+        "_comment": "Сверено с GitHub API 05.10.2026: выпуск v0.8.99 несёт FlClash-0.8.99-android-{arm64-v8a,armeabi-v7a,x86_64}.apk, -windows-{amd64,arm64}-setup.exe и .zip, -macos-{amd64,arm64}.dmg, -linux-{amd64,arm64}.{AppImage,deb,rpm} и SHA256SUMS, у каждого digest sha256. Копия: arm64-v8a (Android), amd64-setup.exe (Windows), amd64.dmg (macOS: Intel и Apple Silicon через Rosetta, как у AmneziaVPN), amd64.AppImage (Linux: любой дистрибутив)"
+      },
+      "_comment": "Сверено с GitHub API 04.10.2026: выпуск v0.8.99 от 03.10.2026; ядро — подмодуль core/Clash.Meta (chen08209/Clash.Meta, ветка FlClash): amneziawg-go 20260908 — как в mihomo 1.19.31/1.19.32, поля version: 3 и header-protection-key в adapter/outbound/wireguard.go. Линии по выпускам: i1 (1.5) — с 0.8.88, s3 (2.0) — с 0.8.89, amneziawg-go 20260612 (2.0 без сбоя на S4, как mihomo 1.19.28) — с 0.8.95, 3.x — с 0.8.97, правки 1.19.31 — с 0.8.99. Ссылка install-config: схемы clash, clashmeta, flclash (lib/common/protocol.dart), берётся только url. Обновление профиля по умолчанию — раз в сутки (defaultUpdateDuration), заголовок Profile-Update-Interval не читает."
+    },
+    {
+      "id": "clash-meta",
+      "name": "Clash Meta for Android",
+      "developer": "MetaCubeX",
+      "official": false,
+      "license": "GPL-3.0",
+      "source": "https://github.com/MetaCubeX/ClashMetaForAndroid",
+      "static": false,
+      "platforms": {
+        "android": {
+          "links": [
+            {
+              "kind": "github",
+              "url": "https://github.com/MetaCubeX/ClashMetaForAndroid/releases/latest",
+              "note": {
+                "ru": "APK: arm64-v8a или universal",
+                "en": "APK: arm64-v8a or universal"
+              }
+            }
+          ],
+          "support": {
+            "1.0": "yes",
+            "1.5": "2.11.16",
+            "2.0": "2.11.31",
+            "3.1": "2.11.34"
+          },
+          "note": {
+            "ru": "Ядро — mihomo того же дня: AmneziaWG 3.1 — с 2.11.34 (mihomo 1.19.31)",
+            "en": "The core is mihomo of the same day: AmneziaWG 3.1 since 2.11.34 (mihomo 1.19.31)"
+          }
+        }
+      },
+      "import": {
+        "conf": false,
+        "qr-conf": false,
+        "vpn": false,
+        "qr-vpn": false,
+        "deeplink": {},
+        "hint": {
+          "ru": "Только подписка: профиль mihomo по ссылке",
+          "en": "Subscription only: a mihomo profile by link"
+        }
+      },
+      "subscription": {
+        "format": "mihomo",
+        "deeplink": "clashmeta://install-config?name={name}&update-interval={minutes}&url={url}",
+        "update_hours": 0,
+        "qr": "",
+        "paste": {
+          "ru": "вставьте в Clash Meta: «Профили» → «+» → «Импорт из URL», «Автообновление (минут)» — {minutes}, «Сохранить»",
+          "en": "paste it in Clash Meta: Profiles → + → Import from URL, Auto update (minutes) — {minutes}, Save"
+        },
+        "hint": {
+          "ru": "«Профили» → «+» → «Импорт из URL»: вставьте ссылку, «Автообновление (минут)» — {minutes}, «Сохранить», затем выберите профиль",
+          "en": "Profiles → + → Import from URL: paste the link, Auto update (minutes) — {minutes}, Save, then select the profile"
+        }
+      },
+      "mirror": {
+        "repo": "MetaCubeX/ClashMetaForAndroid",
+        "assets": {
+          "android": "^cmfa-[0-9.]+-meta-arm64-v8a-release\\.apk$"
+        },
+        "license": "GPL-3.0",
+        "_comment": "Сверено с GitHub API 05.10.2026: выпуск v2.11.35 несёт cmfa-2.11.35-meta-{arm64-v8a,armeabi-v7a,x86,x86_64,universal}-release.apk и output-metadata.json, у каждого digest sha256. Копия — arm64-v8a (universal — 124 МБ)"
+      },
+      "_comment": "Сверено с GitHub API 04.10.2026: выпуск v2.11.35 от 30.09.2026; ядро — подмодуль core/src/foss/golang/clash = MetaCubeX/mihomo (ветка Alpha): amneziawg-go 20260908 с v2.11.34 (14.09.2026, день mihomo 1.19.31), 3.x — с v2.11.33, 20260612 (2.0 без сбоя на S4) — с v2.11.31, s3 (2.0) — с v2.11.17, i1 (1.5) — с v2.11.16. Ссылка: схемы clash и clashmeta, host install-config (ExternalControlActivity): url, name, update-interval в минутах (не меньше 15)."
+    },
+    {
+      "id": "clash-verge-rev",
+      "name": "Clash Verge Rev",
+      "developer": "clash-verge-rev",
+      "official": false,
+      "license": "GPL-3.0",
+      "source": "https://github.com/clash-verge-rev/clash-verge-rev",
+      "static": false,
+      "platforms": {
+        "windows": {
+          "links": [
+            {
+              "kind": "github",
+              "url": "https://github.com/clash-verge-rev/clash-verge-rev/releases/latest",
+              "note": {
+                "ru": "Установщик x64-setup.exe (Windows 10 и новее)",
+                "en": "The x64-setup.exe installer (Windows 10 and newer)"
+              }
+            }
+          ],
+          "support": {
+            "1.0": "yes",
+            "1.5": "2.4.1",
+            "2.0": "2.5.2",
+            "3.1": "2.5.5"
+          },
+          "note": {
+            "ru": "Ядро mihomo — последнее на день сборки: 2.5.5–2.5.6 — 1.19.31, 2.5.7 — 1.19.32; обновляется в настройках приложения",
+            "en": "The mihomo core is the latest on the build day: 2.5.5–2.5.6 ship 1.19.31, 2.5.7 ships 1.19.32; it updates in the app settings"
+          }
+        },
+        "macos": {
+          "links": [
+            {
+              "kind": "github",
+              "url": "https://github.com/clash-verge-rev/clash-verge-rev/releases/latest",
+              "note": {
+                "ru": "DMG: aarch64 — Apple Silicon, x64 — Intel",
+                "en": "DMG: aarch64 for Apple Silicon, x64 for Intel"
+              }
+            }
+          ],
+          "support": {
+            "1.0": "yes",
+            "1.5": "2.4.1",
+            "2.0": "2.5.2",
+            "3.1": "2.5.5"
+          },
+          "note": {
+            "ru": "Ядро mihomo — последнее на день сборки: 2.5.5–2.5.6 — 1.19.31, 2.5.7 — 1.19.32; обновляется в настройках приложения",
+            "en": "The mihomo core is the latest on the build day: 2.5.5–2.5.6 ship 1.19.31, 2.5.7 ships 1.19.32; it updates in the app settings"
+          }
+        },
+        "linux": {
+          "links": [
+            {
+              "kind": "github",
+              "url": "https://github.com/clash-verge-rev/clash-verge-rev/releases/latest",
+              "note": {
+                "ru": "deb или rpm",
+                "en": "deb or rpm"
+              }
+            }
+          ],
+          "support": {
+            "1.0": "yes",
+            "1.5": "2.4.1",
+            "2.0": "2.5.2",
+            "3.1": "2.5.5"
+          },
+          "note": {
+            "ru": "Ядро mihomo — последнее на день сборки: 2.5.5–2.5.6 — 1.19.31, 2.5.7 — 1.19.32; обновляется в настройках приложения",
+            "en": "The mihomo core is the latest on the build day: 2.5.5–2.5.6 ship 1.19.31, 2.5.7 ships 1.19.32; it updates in the app settings"
+          }
+        }
+      },
+      "import": {
+        "conf": false,
+        "qr-conf": false,
+        "vpn": false,
+        "qr-vpn": false,
+        "deeplink": {},
+        "hint": {
+          "ru": "Только подписка: профиль mihomo по ссылке",
+          "en": "Subscription only: a mihomo profile by link"
+        }
+      },
+      "subscription": {
+        "format": "mihomo",
+        "deeplink": "clash-verge://install-config?name={name}&url={url}",
+        "update_hours": 0,
+        "recommended": [
+          "windows",
+          "macos",
+          "linux"
+        ],
+        "qr": "",
+        "paste": {
+          "ru": "вставьте в Clash Verge Rev: «Профили» → поле «URL профиля» → «Импортировать»",
+          "en": "paste it in Clash Verge Rev: Profiles → the “Profile URL” field → “Import”"
+        },
+        "hint": {
+          "ru": "«Профили»: вставьте ссылку в поле «URL профиля» → «Импортировать», затем выберите профиль",
+          "en": "Profiles: paste the link into “Profile URL” → “Import”, then select the profile"
+        }
+      },
+      "mirror": {
+        "repo": "clash-verge-rev/clash-verge-rev",
+        "assets": {
+          "windows": "^Clash\\.Verge_[0-9.]+_x64-setup\\.exe$",
+          "macos": "^Clash\\.Verge_[0-9.]+_x64\\.dmg$",
+          "linux": "^Clash\\.Verge_[0-9.]+_amd64\\.deb$"
+        },
+        "license": "GPL-3.0",
+        "_comment": "Сверено с GitHub API 05.10.2026: выпуск v2.5.7 несёт Clash.Verge_2.5.7_{x64,arm64}-setup.exe, _{x64,arm64}_fixed_webview2-setup.exe, _{x64,aarch64}.dmg и .app.tar.gz, _{amd64,arm64,armhf}.deb, Clash.Verge-2.5.7-1.{x86_64,aarch64,armhfp}.rpm, подписи .sig и latest.json, у каждого digest sha256. Копия: x64-setup.exe (Windows), x64.dmg (macOS, как у AmneziaVPN), amd64.deb (Linux)"
+      },
+      "_comment": "Сверено с GitHub API 04.10.2026: выпуск v2.5.7 от 02.10.2026. Ядро скачивается при сборке (scripts/prebuild.mjs: releases/latest/download/version.txt mihomo): v2.5.2 — mihomo 1.19.29 (в заметках), v2.5.5 (22.09) и v2.5.6 (26.09) — 1.19.31, v2.5.7 (02.10) — 1.19.32; v2.5.0 — 1.19.25, v2.4.1 (30.08.2025) — уже после 1.19.13. Ссылка install-config: схемы clash и clash-verge (tauri.conf.json), url берётся до конца строки запроса — name ставим ПЕРЕД url (src-tauri/src/utils/resolve/scheme.rs). Profile-Update-Interval читает (prfitem.rs)."
+    },
+    {
+      "id": "clash-party",
+      "name": "Clash Party (Mihomo Party)",
+      "developer": "mihomo-party-org",
+      "official": false,
+      "license": "GPL-3.0",
+      "source": "https://github.com/mihomo-party-org/clash-party",
+      "static": false,
+      "platforms": {
+        "windows": {
+          "links": [
+            {
+              "kind": "github",
+              "url": "https://github.com/mihomo-party-org/clash-party/releases/latest",
+              "note": {
+                "ru": "Установщик clash-party-windows-…-x64-setup.exe",
+                "en": "The clash-party-windows-…-x64-setup.exe installer"
+              }
+            }
+          ],
+          "support": {
+            "1.0": "yes",
+            "1.5": "1.8.6",
+            "2.0": "2.0.1",
+            "3.1": "2.0.3"
+          },
+          "note": {
+            "ru": "Ядро mihomo — последнее на день сборки: 2.0.3 — 1.19.31; обновляется в настройках",
+            "en": "The mihomo core is the latest on the build day: 2.0.3 ships 1.19.31; it updates in the settings"
+          }
+        },
+        "macos": {
+          "links": [
+            {
+              "kind": "github",
+              "url": "https://github.com/mihomo-party-org/clash-party/releases/latest",
+              "note": {
+                "ru": "pkg: arm64 — Apple Silicon, x64 — Intel",
+                "en": "pkg: arm64 for Apple Silicon, x64 for Intel"
+              }
+            }
+          ],
+          "support": {
+            "1.0": "yes",
+            "1.5": "1.8.6",
+            "2.0": "2.0.1",
+            "3.1": "2.0.3"
+          },
+          "note": {
+            "ru": "Ядро mihomo — последнее на день сборки: 2.0.3 — 1.19.31; обновляется в настройках",
+            "en": "The mihomo core is the latest on the build day: 2.0.3 ships 1.19.31; it updates in the settings"
+          }
+        },
+        "linux": {
+          "links": [
+            {
+              "kind": "github",
+              "url": "https://github.com/mihomo-party-org/clash-party/releases/latest",
+              "note": {
+                "ru": "deb, rpm или pkg.tar.zst",
+                "en": "deb, rpm or pkg.tar.zst"
+              }
+            }
+          ],
+          "support": {
+            "1.0": "yes",
+            "1.5": "1.8.6",
+            "2.0": "2.0.1",
+            "3.1": "2.0.3"
+          },
+          "note": {
+            "ru": "Ядро mihomo — последнее на день сборки: 2.0.3 — 1.19.31; обновляется в настройках",
+            "en": "The mihomo core is the latest on the build day: 2.0.3 ships 1.19.31; it updates in the settings"
+          }
+        }
+      },
+      "import": {
+        "conf": false,
+        "qr-conf": false,
+        "vpn": false,
+        "qr-vpn": false,
+        "deeplink": {},
+        "hint": {
+          "ru": "Только подписка: профиль mihomo по ссылке",
+          "en": "Subscription only: a mihomo profile by link"
+        }
+      },
+      "subscription": {
+        "format": "mihomo",
+        "deeplink": "mihomo://install-config?name={name}&url={url}",
+        "update_hours": 0,
+        "qr": "",
+        "paste": {
+          "ru": "вставьте в Clash Party: «Управление профилями» → поле «Введите URL вашей подписки» → «Импорт»",
+          "en": "paste it in Clash Party: Profiles → the “Enter your subscription URL” field → “Import”"
+        },
+        "hint": {
+          "ru": "«Управление профилями»: вставьте ссылку в поле «Введите URL вашей подписки» → «Импорт»",
+          "en": "Profiles: paste the link into “Enter your subscription URL” → “Import”"
+        }
+      },
+      "mirror": {
+        "repo": "mihomo-party-org/clash-party",
+        "assets": {
+          "windows": "^clash-party-windows-[0-9.]+-x64-setup\\.exe$",
+          "macos": "^clash-party-macos-[0-9.]+-x64\\.pkg$",
+          "linux": "^clash-party-linux-[0-9.]+-amd64\\.deb$"
+        },
+        "license": "GPL-3.0",
+        "_comment": "Сверено с GitHub API 05.10.2026: выпуск v2.0.3 несёт clash-party-{windows,win7,macos,catalina,linux}-2.0.3-… (setup.exe и portable.7z, pkg, deb, rpm, pkg.tar.zst) с .sha256 рядом и те же файлы под прежним именем mihomo-party-…, у каждого digest sha256. Копия: windows-x64-setup.exe, macos-x64.pkg (как у AmneziaVPN), linux-amd64.deb; win7- и mihomo-party- образцы не задевают"
+      },
+      "_comment": "Сверено с GitHub API 04.10.2026: Mihomo Party переименована в Clash Party (репозиторий mihomo-party-org/clash-party, clashparty.org), выпуск v2.0.3 от 20.09.2026. Ядро по умолчанию — mihomo (core: 'mihomo' в src/main/utils/template.ts), скачивается при сборке (scripts/prepare.mjs: releases/latest mihomo): v2.0.3 — 1.19.31, v2.0.1 (11.08) — 1.19.29, v1.8.6 (31.08.2025) — после 1.19.13. Ссылка install-config: схемы clash и mihomo (electron-builder.yml, src/main/deeplink.ts), url и name. Profile-Update-Interval читает (src/main/config/profile.ts)."
+    }
+  ]
+}

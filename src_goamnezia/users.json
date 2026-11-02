@@ -1,0 +1,220 @@
+{
+  "schema": 1,
+  "users": [
+    {
+      "created": "2026-11-01T09:17:46Z",
+      "enabled": true,
+      "expires": "",
+      "label": "Холмистая Рамалла",
+      "name": "hilly_ramallah",
+      "peers": {
+        "awg2": {
+          "active": true,
+          "created": "2026-11-01T09:17:46Z",
+          "ip": "10.8.2.1",
+          "last_handshake": 0,
+          "last_rx": 0,
+          "last_tx": 0,
+          "privkey": "KKWHscdbFMMMhSQEkZmk/wKOK/Rg5DtYWHjc0PyCfkY=",
+          "psk": "ZaTVbq1dycCnI6ZdtcmTb/QZXh4yr9CudxaL/3NtfQs=",
+          "pubkey": "xlpLdLocTqbyptsc/Xn1bTleeu7cLgHv/Xph+bBU8Hs=",
+          "rx": 0,
+          "tx": 0
+        },
+        "awg3": {
+          "active": true,
+          "created": "2026-11-01T09:17:45Z",
+          "ip": "10.8.3.1",
+          "last_handshake": 0,
+          "last_rx": 0,
+          "last_tx": 0,
+          "privkey": "0LGyafGCXwB4zrp4pWiyTt9NpRb5bVCUGqji39hgYlM=",
+          "psk": "uLrh07Eg2bQeXH/uAYtKtEgC2V4GsYXtJDSiCN6Vd4k=",
+          "pubkey": "AxNNq5grreh3Tbu72dtXPo9+RjzoQFn75O95RK0mIFk=",
+          "rx": 0,
+          "tx": 0
+        }
+      },
+      "quota_bytes": 0,
+      "traffic": {
+        "last_rx": 0,
+        "last_tx": 0,
+        "rx": 0,
+        "tx": 0,
+        "updated": "2026-11-02T13:42:27Z"
+      }
+    },
+    {
+      "created": "2026-11-01T09:17:49Z",
+      "enabled": true,
+      "expires": "",
+      "label": "Ветреный Баку",
+      "name": "windy_baku",
+      "peers": {
+        "awg2": {
+          "active": true,
+          "created": "2026-11-01T09:17:49Z",
+          "ip": "10.8.2.2",
+          "last_handshake": 0,
+          "last_rx": 0,
+          "last_tx": 0,
+          "privkey": "ADrh0izVLzLe0cJCVC0Cae4Y70FfUXJ8OZJWighkq3Q=",
+          "psk": "ZC/NNqfyjDw5pYw6lLWKgGOIPs1aWH5go4fBOpSLp/A=",
+          "pubkey": "ShwpR0VUF6VIT/+h+7FhdBZs46Elw4MuUyvcXN89qlE=",
+          "rx": 0,
+          "tx": 0
+        },
+        "awg3": {
+          "active": true,
+          "created": "2026-11-01T09:17:49Z",
+          "ip": "10.8.3.2",
+          "last_handshake": 0,
+          "last_rx": 0,
+          "last_tx": 0,
+          "privkey": "wPmCa51JeXtQ0oxFscb0iz5Hqw6Jbds+ZoUEjJWcvXQ=",
+          "psk": "ZDnRhgCZ/d/M5Hg04KNeF4fRDk1pufwYCunqvNYNu54=",
+          "pubkey": "CQvjrx80wfc3Obh06bNPuVwYMFootTqu1AzaF9W2jWI=",
+          "rx": 0,
+          "tx": 0
+        }
+      },
+      "quota_bytes": 0,
+      "traffic": {
+        "last_rx": 0,
+        "last_tx": 0,
+        "rx": 0,
+        "tx": 0,
+        "updated": "2026-11-02T13:42:27Z"
+      }
+    },
+    {
+      "created": "2026-11-01T09:17:53Z",
+      "enabled": true,
+      "expires": "",
+      "label": "My Xiaomi",
+      "name": "coral_tarawa",
+      "peers": {
+        "awg2": {
+          "active": true,
+          "created": "2026-11-01T09:17:53Z",
+          "ip": "10.8.2.3",
+          "last_handshake": 0,
+          "last_rx": 0,
+          "last_tx": 0,
+          "privkey": "4NL6SEgDO2OqwwXd7SF+CqgkkBggvERpGGiEeMuzpUQ=",
+          "psk": "LjUOl9w5CuVPebwdeDVlDE2QcHGWmiYC79Syi83F/L8=",
+          "pubkey": "ZFzUpXV8S3rrcKkoP6kb3Ie1dsJITQhL8N5VdzjVCAE=",
+          "rx": 0,
+          "tx": 0
+        },
+        "awg3": {
+          "active": true,
+          "created": "2026-11-01T09:17:52Z",
+          "ip": "10.8.3.3",
+          "last_handshake": 1793625420,
+          "last_rx": 255707424,
+          "last_tx": 3629288588,
+          "privkey": "mMUG4UsmKurTzqF0mgkS8CgbfUN/oCoap64VMf/hOW8=",
+          "psk": "ql4VUMOfm4R8pTmTFMUtkUiZbYrpSOkT/3/Nkx6D7j8=",
+          "pubkey": "OLAhIA7YH5InJdz8P98G4RpeVFO2mod5uY39QSV/F2Q=",
+          "rx": 255707424,
+          "tx": 3629288588
+        }
+      },
+      "quota_bytes": 0,
+      "traffic": {
+        "last_rx": 255707424,
+        "last_tx": 3629288588,
+        "rx": 255707424,
+        "tx": 3629288588,
+        "updated": "2026-11-02T13:42:27Z"
+      }
+    },
+    {
+      "created": "2026-11-01T09:17:56Z",
+      "enabled": true,
+      "expires": "",
+      "label": "MykeenAezaWestern",
+      "name": "ancient_damascus",
+      "peers": {
+        "awg2": {
+          "active": true,
+          "created": "2026-11-01T09:17:56Z",
+          "ip": "10.8.2.4",
+          "last_handshake": 0,
+          "last_rx": 0,
+          "last_tx": 0,
+          "privkey": "mCDvzvAlN7TA5qIEZuhobkTIx6OD5E92lyDUKIV2GnQ=",
+          "psk": "InoUaBh3iXNSmAPuKS2xxbArgi9E2RFO5NfGFdtEaHc=",
+          "pubkey": "dh2ht1fH513bumtAbP5wnRYqWU6hOg4lrc336+M+XFA=",
+          "rx": 0,
+          "tx": 0
+        },
+        "awg3": {
+          "active": true,
+          "created": "2026-11-01T09:17:56Z",
+          "ip": "10.8.3.4",
+          "last_handshake": 1793626933,
+          "last_rx": 477127470,
+          "last_tx": 3752660182,
+          "privkey": "iBhuJ5uf3HDT3A2ikGntiB4THjrrILygNcX8ZYTe6nA=",
+          "psk": "H1uvg+czWtyYWa28dBlzyqY8qbEcJu2x8vrn/OHC7CM=",
+          "pubkey": "/BVnKnmSCaKccq6jMSr+qxwsQ6g2f/858somFvGXPFg=",
+          "rx": 477127470,
+          "tx": 3752660182
+        }
+      },
+      "quota_bytes": 0,
+      "traffic": {
+        "last_rx": 477127470,
+        "last_tx": 3752660182,
+        "rx": 477127470,
+        "tx": 3752660182,
+        "updated": "2026-11-02T13:42:27Z"
+      }
+    },
+    {
+      "created": "2026-11-01T09:18:00Z",
+      "enabled": true,
+      "expires": "",
+      "label": "Любимая",
+      "name": "green_lilongwe",
+      "peers": {
+        "awg2": {
+          "active": true,
+          "created": "2026-11-01T09:18:00Z",
+          "ip": "10.8.2.5",
+          "last_handshake": 0,
+          "last_rx": 0,
+          "last_tx": 0,
+          "privkey": "eA7jySQJQUQNOFVPUtLw+rk91kAHkumv7XAqj9H+UGc=",
+          "psk": "Sma7bZ1r5ZAh5M4hMmvC/HdzsOp31iuR3dbVRX8/uRU=",
+          "pubkey": "AIAG1pUqPNIvayFakCjR1K/myZ/zKh7W2YrHwc452io=",
+          "rx": 0,
+          "tx": 0
+        },
+        "awg3": {
+          "active": true,
+          "created": "2026-11-01T09:17:59Z",
+          "ip": "10.8.3.5",
+          "last_handshake": 1793625006,
+          "last_rx": 60817221,
+          "last_tx": 1544771949,
+          "privkey": "qAVsDu8Z85gc5ZaLxxnA0DKVlhRmmgv5vwMmP+homkA=",
+          "psk": "cvCC01bmcm+j/dVk/IGwVMBoRWKziIN2MyNBdI8PtwI=",
+          "pubkey": "nUtcDw0a7iZYP1ZuZd/ZeaDk3qoHnJSTLkObOiZl3QY=",
+          "rx": 60817221,
+          "tx": 1544771949
+        }
+      },
+      "quota_bytes": 0,
+      "traffic": {
+        "last_rx": 60817221,
+        "last_tx": 1544771949,
+        "rx": 60817221,
+        "tx": 1544771949,
+        "updated": "2026-11-02T13:42:27Z"
+      }
+    }
+  ]
+}

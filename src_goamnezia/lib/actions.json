@@ -1,0 +1,2648 @@
+{
+  "schema": 1,
+  "_comment": "Единое описание действий моста install.sh --action=<name> --json. Из него строятся инструменты MCP, проверки тестов и подсказки бота. Параметр p в CLI передаётся как --p=value, подчёркивания в имени параметра становятся дефисами (quota_gb -> --quota-gb). Ответ моста: последняя строка stdout = {\"status\":\"success\"|\"error\",\"message\":\"…\",\"code\":\"…\",…}.",
+  "param_types": {
+    "name": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{1,32}$",
+      "description": {
+        "ru": "Идентификатор пользователя (латиница, цифры, _ и -)",
+        "en": "User id (ASCII letters, digits, _ and -)"
+      }
+    },
+    "label": {
+      "type": "string",
+      "pattern": "^[^\\x00-\\x1f\\x7f\\\\]{1,48}$",
+      "description": {
+        "ru": "Отображаемое имя, любые буквы, до 48 символов (без обратной косой черты)",
+        "en": "Display name, any letters, up to 48 chars"
+      }
+    },
+    "profile": {
+      "type": "string",
+      "enum": [
+        "awg1",
+        "awg2",
+        "awg3"
+      ],
+      "description": {
+        "ru": "Профиль протокола — место (awg1, awg2, awg3), а не линия. При свежей установке awg1 = AmneziaWG 1.0/1.5, awg2 = 2.0, awg3 = 3.1, но подхваченный из приложения Amnezia amnezia-awg2 бывает 3.1, и тогда 2.0 стоит в awg3. Фактическая линия — поле line профиля в status / profiles-status и в ответе user-key: ключ «на 3.1» — с профиля, у которого line = 3.1",
+        "en": "Protocol profile — a place (awg1, awg2, awg3), not a line. On a fresh install awg1 = AmneziaWG 1.0/1.5, awg2 = 2.0, awg3 = 3.1, but amnezia-awg2 adopted from the Amnezia app may be 3.1, and then 2.0 sits in awg3. The actual line is the profile line field in status / profiles-status and in the user-key answer: a “3.1 key” comes from the profile whose line is 3.1"
+      }
+    },
+    "profiles": {
+      "type": "string",
+      "pattern": "^(awg1|awg2|awg3)(,(awg1|awg2|awg3))*$",
+      "description": {
+        "ru": "Профили через запятую (awg2,awg3). Параметр не передан — во все установленные; пустая строка — отказ no_profiles_picked, а не «во все»",
+        "en": "Comma-separated profiles (awg2,awg3). Omit the parameter for every installed profile; an empty string is refused with no_profiles_picked, it does not mean \"all\""
+      }
+    },
+    "port": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535,
+      "description": {
+        "ru": "UDP-порт профиля (443 — только один профиль)",
+        "en": "Profile UDP port (443 can be held by one profile only)"
+      }
+    },
+    "adopted_confirm": {
+      "type": "string",
+      "enum": [
+        "awg1",
+        "awg2",
+        "awg3"
+      ],
+      "description": {
+        "ru": "Согласие на перенос порта, смену подсети или исправление S4 профиля, подхваченного у приложения Amnezia, где у людей нет ключей на сервере (им не переслать новые конфиги): имя того же профиля. Передавать только после прямого согласия человека; без него такое изменение отклоняется кодом adopted_keyless",
+        "en": "Consent to move the port, change the subnet or fix S4 of a profile adopted from the Amnezia app whose people have no keys on the server (new configs cannot be re-sent to them): the same profile name. Pass it only after the human explicitly agreed; without it such a change is refused with code adopted_keyless"
+      }
+    },
+    "format": {
+      "type": "string",
+      "enum": [
+        "conf",
+        "vpn",
+        "qr-conf",
+        "qr-vpn",
+        "all"
+      ],
+      "description": {
+        "ru": "Формат ключа: conf = AmneziaWG .conf, vpn = ключ приложения Amnezia vpn://, qr-conf / qr-vpn = QR (PNG в base64), all = всё сразу",
+        "en": "Key format: conf = AmneziaWG .conf, vpn = Amnezia app key vpn://, qr-conf / qr-vpn = QR (PNG base64), all = everything"
+      }
+    },
+    "quota_gb": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100000,
+      "description": {
+        "ru": "Лимит трафика в ГБ, 0 = без лимита",
+        "en": "Traffic quota in GB, 0 = unlimited"
+      }
+    },
+    "days": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3650,
+      "description": {
+        "ru": "Срок действия в днях от сегодня, 0 = бессрочно",
+        "en": "Validity in days from today, 0 = unlimited"
+      }
+    },
+    "preset": {
+      "type": "string",
+      "enum": [
+        "default",
+        "quic",
+        "router"
+      ],
+      "description": {
+        "ru": "Пресет параметров маскировки",
+        "en": "Obfuscation parameter preset"
+      }
+    },
+    "lines": {
+      "type": "integer",
+      "minimum": 10,
+      "maximum": 2000,
+      "description": {
+        "ru": "Сколько последних строк лога",
+        "en": "How many last log lines"
+      }
+    },
+    "component": {
+      "type": "string",
+      "enum": [
+        "awg1",
+        "awg2",
+        "awg3",
+        "bot",
+        "admin",
+        "mcp",
+        "nginx",
+        "system"
+      ],
+      "description": {
+        "ru": "Источник логов: профиль (awg1/awg2/awg3), служба (bot, admin, nginx, system) или журнал действий моста — он называется mcp. Это не имена участков диска из logs-status: те показывают занятое место, читать по ним нечего",
+        "en": "Log source: a profile (awg1/awg2/awg3), a service (bot, admin, nginx, system) or the bridge action log — its name is mcp. Not the disk-area names from logs-status: those show used space and have no lines to read"
+      }
+    },
+    "file": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._-]{1,128}$",
+      "description": {
+        "ru": "Имя файла бэкапа (как в backup-list): в каталоге бэкапов или копия, оставленная «Удалить всё» в /root (goamnezia_backup_*, goamnezia-wipe-*). Путей не принимает",
+        "en": "Backup file name (as in backup-list): inside the backups dir or a copy left in /root by «Delete everything» (goamnezia_backup_*, goamnezia-wipe-*). Paths are not accepted"
+      }
+    },
+    "container": {
+      "type": "string",
+      "pattern": "^amnezia-[a-z0-9-]{2,32}$",
+      "description": {
+        "ru": "Имя контейнера Amnezia",
+        "en": "Amnezia container name"
+      }
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "lite",
+        "lite_site",
+        "pro"
+      ],
+      "description": {
+        "ru": "Режим работы (id не меняются, названия — с 0.6.0): lite (Lite — только VPN) — только AmneziaWG, сайта нет; lite_site (Semi-Pro — VPN и сайт) — домен, сайт-заглушка и панель на TCP/443 с сертификатом Let's Encrypt, AmneziaWG на своём порту; pro (Pro — сайт и VPN на 443) — то же самое, но AmneziaWG на UDP/443 рядом с сайтом",
+        "en": "Operating mode (the ids stay, the names are 0.6.0 ones): lite (Lite — VPN only) — AmneziaWG only, no site; lite_site (Semi-Pro — VPN and site) — domain, cover site and panel on TCP/443 with a Let's Encrypt certificate, AmneziaWG on its own port; pro (Pro — site and VPN on 443) — the same, but AmneziaWG on UDP/443 next to the site"
+      }
+    },
+    "domain": {
+      "type": "string",
+      "pattern": "^([a-z0-9](-*[a-z0-9])*)(\\.([a-z0-9](-*[a-z0-9])*))+$",
+      "maxLength": 253,
+      "description": {
+        "ru": "Домен, указывающий на сервер (строчные буквы, до 253 символов)",
+        "en": "Domain pointing at the server (lowercase, up to 253 chars)"
+      }
+    },
+    "domain_input": {
+      "type": "string",
+      "pattern": "^[^\\x00-\\x1f\\x7f\\\\ ]{1,253}$",
+      "description": {
+        "ru": "Домен так, как его ввёл человек: можно с https://, путём и точкой в конце (их отрежет ядро), кириллицей (переведёт в punycode); в ответе — domain (punycode) и domain_display",
+        "en": "The domain as a person typed it: https://, a path and a trailing dot are allowed (the core strips them), national letters too (converted to punycode); the reply carries domain (punycode) and domain_display"
+      }
+    },
+    "lazy_keys": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 20,
+      "description": {
+        "ru": "Сколько ключей завести (у каждого — обе линии 2.0 и 3.1 и страница подключения), 1–20",
+        "en": "How many keys to create (each with both lines 2.0 and 3.1 and a connection page), 1–20"
+      }
+    },
+    "bulk_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100,
+      "description": {
+        "ru": "Сколько человек добавить за раз, 1–100",
+        "en": "How many people to add at once, 1–100"
+      }
+    },
+    "name_prefix": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{1,28}$",
+      "description": {
+        "ru": "Префикс имён: латиница, цифры, _ и -, до 28 символов; имена будут <префикс>-01, <префикс>-02… с номера после уже заведённых. Не передан — случайные имена «прилагательное + столица»",
+        "en": "Name prefix: ASCII letters, digits, _ and -, up to 28 characters; names become <prefix>-01, <prefix>-02… numbered after the ones already made. Omitted — random «adjective + capital» names"
+      }
+    },
+    "bulk_confirm": {
+      "type": "string",
+      "pattern": "^([1-9][0-9]?|100)$",
+      "description": {
+        "ru": "Подтверждение числом: сколько человек удалит этот выбор — count из users-del-bulk-preview, показанный человеку. Сверяется с выбранным в момент удаления: не совпало (список успел измениться) — отказ confirm_mismatch до изменений, в ответе matched",
+        "en": "Confirmation by number: how many people this selection deletes — the count from users-del-bulk-preview shown to the human. It is checked against the selection at the moment of deletion: a mismatch (the list has changed) is refused with confirm_mismatch before any change, matched in the reply"
+      }
+    },
+    "name_list": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{1,32}(,[A-Za-z0-9_-]{1,32})*$",
+      "maxLength": 3299,
+      "description": {
+        "ru": "Имена пользователей через запятую, 1–100 (anna,bob,office-03); каждый должен быть заведён, иначе отказ user_not_found до изменений",
+        "en": "Comma-separated user names, 1–100 (anna,bob,office-03); each must exist, otherwise user_not_found before any change"
+      }
+    },
+    "del_prefix": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{1,28}$",
+      "description": {
+        "ru": "Префикс: выбираются все <префикс>-<число> — так их заводит users-add-bulk (office-01, office-02…); office-boss, заведённого руками, префикс office не задевает",
+        "en": "Prefix: every <prefix>-<number> is selected — the way users-add-bulk makes them (office-01, office-02…); office-boss made by hand is not covered by the prefix office"
+      }
+    },
+    "user_state": {
+      "type": "string",
+      "enum": [
+        "disabled",
+        "expired",
+        "quota"
+      ],
+      "description": {
+        "ru": "Кого выбрать по состоянию: disabled — выключены руками (выключенных таймером лимитов выбирают expired и quota), expired — срок доступа вышел, quota — лимит трафика исчерпан",
+        "en": "Who to select by state: disabled — turned off by hand (people turned off by the limit timer are selected by expired and quota), expired — the access term is over, quota — the traffic quota is used up"
+      }
+    },
+    "template": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{1,120}$",
+      "description": {
+        "ru": "Идентификатор шаблона сайта из каталога (или __random__)",
+        "en": "Site template id from the catalog (or __random__)"
+      }
+    },
+    "dns": {
+      "type": "string",
+      "pattern": "^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$",
+      "description": {
+        "ru": "IPv4-адрес DNS",
+        "en": "DNS IPv4 address"
+      }
+    },
+    "tag": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._-]{1,64}$",
+      "description": {
+        "ru": "Тег образа или релиза upstream",
+        "en": "Upstream image/release tag"
+      }
+    },
+    "new": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{1,32}$",
+      "description": {
+        "ru": "Новый идентификатор",
+        "en": "New id"
+      }
+    },
+    "param_key": {
+      "type": "string",
+      "enum": [
+        "Jc",
+        "Jmin",
+        "Jmax",
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "H1",
+        "H2",
+        "H3",
+        "H4",
+        "I1",
+        "I2",
+        "I3",
+        "I4",
+        "I5",
+        "HeaderProtectionKey",
+        "ContentPaddingAddition",
+        "RekeyAfterTime",
+        "RekeyTimeout",
+        "RejectAfterTime",
+        "KeepaliveTimeout",
+        "MaxHandshakeAttempts",
+        "RandomTrailers",
+        "DisableCookies",
+        "PersistentKeepalive",
+        "MTU"
+      ],
+      "description": {
+        "ru": "Имя параметра AmneziaWG, как в конфиге",
+        "en": "AmneziaWG parameter name as in the config"
+      }
+    },
+    "param_value": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9+/=<>. _-]{0,512}$",
+      "description": {
+        "ru": "Значение параметра: число, диапазон a-b, on/off, base64-ключ или сигнатурный пакет вида <b 0x…><r 2>; пустое = убрать параметр",
+        "en": "Parameter value: number, range a-b, on/off, base64 key or signature packet like <b 0x…><r 2>; empty = unset"
+      }
+    },
+    "subnet": {
+      "type": "string",
+      "pattern": "^(10\\.[0-9]{1,3}\\.[0-9]{1,3}\\.0|172\\.(1[6-9]|2[0-9]|3[01])\\.[0-9]{1,3}\\.0|192\\.168\\.[0-9]{1,3}\\.0)/2[0-4]$",
+      "description": {
+        "ru": "Подсеть профиля в частном диапазоне, сетевой адрес и маска /20–/24 (например 10.8.2.0/24)",
+        "en": "Profile subnet in a private range, network address and /20–/24 mask (e.g. 10.8.2.0/24)"
+      }
+    },
+    "mtu": {
+      "type": "integer",
+      "minimum": 1280,
+      "maximum": 1500,
+      "below_minimum": {
+        "ru": "Ниже 1280 туннель не поднимется у клиентов с IPv6 (AllowedIPs ::/0) — оставьте 1280 или больше.",
+        "en": "Below 1280 the tunnel will not come up for clients with IPv6 (AllowedIPs ::/0) — keep 1280 or more."
+      },
+      "description": {
+        "ru": "MTU профиля: клиентские конфиги и интерфейс сервера. Стандарт goAmnezia — 1280: работает везде, и это минимум — ниже туннель не поднимется у клиентов с IPv6 (AllowedIPs ::/0). На проводном интернете можно поднять до 1320 — будет на несколько процентов быстрее; пакет данных MTU + 80 + S4 больше 1440 на части хостеров и сетей не пройдёт",
+        "en": "Profile MTU: client configs and the server interface. The goAmnezia standard is 1280: works everywhere, and it is the minimum — below it the tunnel will not come up for clients with IPv6 (AllowedIPs ::/0). On wired internet it can be raised up to 1320 — a few percent faster; a data packet MTU + 80 + S4 larger than 1440 does not pass at some hosting providers and networks"
+      }
+    },
+    "host": {
+      "type": "string",
+      "pattern": "^(([a-z0-9](-*[a-z0-9])*(\\.[a-z0-9](-*[a-z0-9])*)+|([0-9]{1,3}\\.){3}[0-9]{1,3}))?$",
+      "description": {
+        "ru": "Хост для Endpoint в ключах: домен или IPv4; пустое = по умолчанию: в режиме Pro домен сервера, иначе IP сервера",
+        "en": "Endpoint host for keys: domain or IPv4; empty = the default: the server domain in Pro mode, otherwise the server IP"
+      }
+    },
+    "key_endpoint": {
+      "type": "string",
+      "pattern": "^(([a-z0-9](-*[a-z0-9])*(\\.[a-z0-9](-*[a-z0-9])*)+|([0-9]{1,3}\\.){3}[0-9]{1,3}))?$",
+      "description": {
+        "ru": "Адрес сервера только для этой выдачи ключа: IPv4 этого сервера или его настроенный домен. Пара ключей и порт профиля те же, за пользователем ничего не сохраняется; пусто — адрес как обычно",
+        "en": "Server address for this key only: an IPv4 of this server or its configured domain. Same key pair and profile port, nothing is saved for the user; empty = the usual address"
+      }
+    },
+    "key_material": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 65536,
+      "description": {
+        "ru": "Ключ человека так, как его когда-то выдали: ссылка vpn://… или текст файла .conf (передаётся мосту через stdin, не в командной строке)",
+        "en": "The person's key as it was once issued: a vpn://… link or the text of a .conf file (passed to the bridge via stdin, never on the command line)"
+      }
+    },
+    "lang": {
+      "type": "string",
+      "enum": [
+        "ru",
+        "en"
+      ],
+      "description": {
+        "ru": "Язык",
+        "en": "Language"
+      }
+    },
+    "grant_mode": {
+      "type": "string",
+      "enum": [
+        "static",
+        "rolling",
+        "connect"
+      ],
+      "description": {
+        "ru": "Вид доступа: static — постоянный токен в заголовке, работает с любым клиентом MCP; rolling — одноразовый ключ, который меняется на каждом запросе (клиент обязан хранить ключ сам); connect — одноразовый ключ через переходник goamnezia-connect: выдаётся код привязки на 10 минут, секрета в конфигурации клиента нет, путь плавающий, ключ на машине агента хранится в TPM, если он есть. Один доступ — один клиент",
+        "en": "Grant kind: static — a permanent header token that works with any MCP client; rolling — a one-shot key that changes on every request (the client must keep the key itself); connect — a one-shot key through the goamnezia-connect connector: a 10-minute enrollment code is issued, the client configuration holds no secret, the path floats, and the key on the agent machine is kept in TPM when there is one. One grant, one client"
+      }
+    },
+    "onoff": {
+      "type": "string",
+      "enum": [
+        "on",
+        "off"
+      ],
+      "description": {
+        "ru": "Включить/выключить",
+        "en": "On/off"
+      }
+    },
+    "scope": {
+      "type": "string",
+      "enum": [
+        "read",
+        "write",
+        "admin"
+      ],
+      "description": {
+        "ru": "Уровень доступа агента (по умолчанию read): read — только чтение и БЕЗ приватных ключей клиентов; write — всё кроме разрушительного, включая выдачу приватных ключей всех клиентов; admin — всё, включая разрушительное",
+        "en": "Agent access level (read by default): read — read-only and NO client private keys; write — everything but destructive, including handing out every client's private key; admin — everything, destructive included"
+      }
+    },
+    "agent_id": {
+      "type": "string",
+      "pattern": "^a-[a-f0-9]{4,8}$",
+      "description": {
+        "ru": "Идентификатор доступа агента",
+        "en": "Agent grant id"
+      }
+    },
+    "ip_list": {
+      "type": "string",
+      "pattern": "^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])(/([1-9]|[12][0-9]|3[0-2]))?(,((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])(/([1-9]|[12][0-9]|3[0-2]))?)*$",
+      "description": {
+        "ru": "Список IPv4-адресов или подсетей через запятую",
+        "en": "Comma-separated IPv4 addresses or subnets"
+      }
+    },
+    "server_address": {
+      "type": "string",
+      "pattern": "^(((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9]))?$",
+      "description": {
+        "ru": "Внешний IPv4 этой машины для Endpoint в ключах пользователя; пустое = общий адрес сервера",
+        "en": "An external IPv4 address of this machine for the Endpoint in the user's keys; empty = the common server address"
+      }
+    },
+    "share_id": {
+      "type": "string",
+      "pattern": "^s-[a-f0-9]{4,8}$",
+      "description": {
+        "ru": "Идентификатор временной раздачи файла",
+        "en": "Temporary file share id"
+      }
+    },
+    "frequency": {
+      "type": "string",
+      "enum": [
+        "off",
+        "daily",
+        "weekly",
+        "monthly"
+      ],
+      "description": {
+        "ru": "Периодичность ночной копии: off — выключить таймер, daily — каждую ночь 03:20, weekly — по воскресеньям, monthly — первого числа",
+        "en": "Nightly backup frequency: off disables the timer, daily runs at 03:20 every night, weekly on Sundays, monthly on the 1st"
+      }
+    },
+    "page_id": {
+      "type": "string",
+      "pattern": "^p-[a-f0-9]{4,8}$",
+      "description": {
+        "ru": "Идентификатор страницы подключения (из page-list)",
+        "en": "Connection page id (from page-list)"
+      }
+    },
+    "ttl": {
+      "type": "string",
+      "pattern": "^([1-9][0-9]{0,2}h|[1-9][0-9]{0,2}d|forever)$",
+      "description": {
+        "ru": "Срок жизни страницы: часы (1h…720h), дни (1d…365d) или forever — бессрочно",
+        "en": "Page lifetime: hours (1h…720h), days (1d…365d) or forever — no expiry"
+      }
+    },
+    "page_profiles": {
+      "type": "string",
+      "pattern": "^(awg1|awg2|awg3)(,(awg1|awg2|awg3))*$",
+      "description": {
+        "ru": "Профили страницы через запятую (awg2,awg3); не передан или пустой — все профили, в которых у пользователя есть ключ",
+        "en": "Page profiles separated by commas (awg2,awg3); omitted or empty — every profile the user has a key in"
+      }
+    },
+    "app": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]{2,32}$",
+      "description": {
+        "ru": "Идентификатор приложения из каталога lib/clients.json (amneziavpn, amneziawg, wgtunnel …)",
+        "en": "App id from the lib/clients.json catalog (amneziavpn, amneziawg, wgtunnel …)"
+      }
+    },
+    "platform": {
+      "type": "string",
+      "enum": [
+        "ios",
+        "android",
+        "android_tv",
+        "tvos",
+        "windows",
+        "macos",
+        "linux",
+        "router"
+      ],
+      "description": {
+        "ru": "Платформа устройства (tvos — Apple TV); зеркалу доступны android, android_tv, windows, macos, linux (ios и tvos — только App Store)",
+        "en": "Device platform (tvos is Apple TV); the mirror serves android, android_tv, windows, macos, linux (ios and tvos are App Store only)"
+      }
+    },
+    "line": {
+      "type": "string",
+      "enum": [
+        "1.0",
+        "1.5",
+        "2.0",
+        "3.1"
+      ],
+      "description": {
+        "ru": "Линейка AmneziaWG",
+        "en": "AmneziaWG line"
+      }
+    },
+    "short_suffix": {
+      "type": "string",
+      "enum": [
+        "all.yaml",
+        "all.txt",
+        "all.vpn",
+        "awg31.conf",
+        "awg20.conf",
+        "awg15.conf",
+        "awg10.conf",
+        "awg31.vpn",
+        "awg20.vpn",
+        "awg15.vpn",
+        "awg10.vpn"
+      ],
+      "description": {
+        "ru": "Адрес подписки, к которому привязана короткая ссылка: all.yaml (профиль mihomo), all.txt (incy, AWG Manager), all.vpn, awgNN.conf и awgNN.vpn по линиям",
+        "en": "The subscription address the short link belongs to: all.yaml (mihomo profile), all.txt (incy, AWG Manager), all.vpn, awgNN.conf and awgNN.vpn per line"
+      }
+    },
+    "short_request": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{1,48}$",
+      "description": {
+        "ru": "Номер запроса подтверждения короткой ссылки (из события short_confirm, short-pending или short-replace-request)",
+        "en": "Short-link confirmation request id (from the short_confirm event, short-pending or short-replace-request)"
+      }
+    },
+    "short_answer": {
+      "type": "string",
+      "pattern": "^([1-9][0-9]|deny|swap)$",
+      "description": {
+        "ru": "Нажатое администратором: число 10–99, deny («Это не я») или swap («↻ Заменить ссылку», только у входа)",
+        "en": "What the administrator pressed: a number 10–99, deny (“Not me”) or swap (“↻ Replace the link”, sign-ins only)"
+      }
+    },
+    "short_who": {
+      "type": "string",
+      "pattern": "^(page|panel|ssh|bot)(:[0-9A-Za-z_.@-]{1,64})?$",
+      "description": {
+        "ru": "Кто: page (страница подключения), panel, ssh, bot или с уточнением после двоеточия — bot:<числовой id> от бота. У short-replace-request — кто просит замену (число показывает он), у short-decide — кто решил (by в событии short_decided)",
+        "en": "Who: page (the connection page), panel, ssh, bot or with a detail after a colon — bot:<numeric id> from the bot. For short-replace-request — who asks for the replacement (it shows the number), for short-decide — who decided (by in the short_decided event)"
+      }
+    },
+    "short_target": {
+      "type": "string",
+      "pattern": "^[0-9A-Za-z:./ -]{2,64}$",
+      "description": {
+        "ru": "Что разбанить: адрес (IPv4, IPv6 или подсеть /64) или короткий код (тире, пробелы и регистр не важны)",
+        "en": "What to unban: an address (IPv4, IPv6 or a /64 subnet) or a short code (dashes, spaces and case do not matter)"
+      }
+    },
+    "kmod_engine": {
+      "type": "string",
+      "enum": [
+        "kernel",
+        "program"
+      ],
+      "description": {
+        "ru": "Движок AmneziaWG профилей: kernel — модуль ядра (только по выбору человека, после kmod-install), program — программа amneziawg-go в Docker (по умолчанию)",
+        "en": "AmneziaWG engine of the profiles: kernel — the kernel module (only by the person's choice, after kmod-install), program — the amneziawg-go program in Docker (the default)"
+      }
+    }
+  },
+  "actions": {
+    "status": {
+      "mcp": "server_status",
+      "readonly": true,
+      "destructive": false,
+      "params": {
+        "brief": {
+          "ref": "onoff",
+          "required": false
+        }
+      },
+      "description": {
+        "ru": "Сводка: режим, домен, адрес в ключах (endpoint_host_gone — вписанного в ключи IP на машине нет), профили с версией ядра, порты профилей, число пользователей, сайт; update_rollback — обновление не встало и откатано (версии, этап, что вернулось) или null; disk — раздел каталога продукта: total_mb, used_mb, free_mb, used_pct, level ok|low|critical (пороги low_mb 1024 и critical_mb 512 МБ свободных); docker_stale — пакет Docker обновлён, а служба старая: reason (version | build | api), binary_version, binary_build, daemon_version, daemon_build, client_api, daemon_api, since — когда обновлён пакет, last_attempt {at, ok, by, code} и retry_after — что сделал сторож; null — служба свежая (лечение — docker-restart). subs_update (без brief) — срок забора подписки без обхода подписок: {update_interval, update_slow}, как в ответе sub-list; модуля подписок нет — null. subnet_overlaps — профили, чьи подсети пересекаются (так приложение Amnezia ставит свои контейнеры, и подхват их берёт как есть): [{profile, subnet, with — с кем, fixed — подсеть этому профилю не сменить (подхваченный старый контейнер на wg0), move — выход: {profile — какой перенести, subnet — свободная подсеть, keyless — сколько его людей без ключа на сервере} или null}]; выход — profile-subnet с этими profile и subnet. brief=on — сводка для частых опросов: без ports, mode_port_mismatch, site, key_hosts, endpoint_effective, endpoint_auto, subnet_overlaps и subs_update (этих полей в ответе нет). lines_check (и в brief) — линии на сервере: no_20 — профили стоят, а ни 2.0, ни 1.x нет (старые версии приложений и роутеры Keenetic не подключатся), shared — [{line, profiles}] линии двух профилей и больше (у таких профилей в profiles line_shared=true), missing — линии пары 2.0 / 3.1, которых нет, reline — {profile, from, line, port, title}: свой профиль, который можно переставить на недостающую линию (profile-reline; профиль приложения — никогда), или null, install — {profile, line}: переставлять нечего, а недостающая линия встанет на свободное место по profile-install без line, или null, text — то же словами. free_lines (и в brief) — {место: линия} свободных мест: какая линия встанет по profile-install без line. dupline_fix (и в brief) — ошибка прошлых версий, найденная миграцией: своя 3.1 повторяет подхваченную у приложения 3.1, а 2.0 нет — {profile, from, line, port, title, users, text, detected_at}, исправляет человек (profile-reline), или null. У профилей в profiles: imported — подхвачен у приложения Amnezia, title — так профиль называют людям: «AmneziaWG 3.1 · порт 6714», подхваченный — «… · из приложения» (имя места awg2/awg3 людям не показывать)",
+        "en": "Summary: mode, domain, the address in keys (endpoint_host_gone — the IP pinned into keys is not on the machine), profiles with core versions, profile ports, user count, site; update_rollback — an update failed and was rolled back (versions, stage, what was restored) or null; disk — the product's partition: total_mb, used_mb, free_mb, used_pct, level ok|low|critical (thresholds low_mb 1024 and critical_mb 512 MB free); docker_stale — the Docker package was updated but the service is still the old one: reason (version | build | api), binary_version, binary_build, daemon_version, daemon_build, client_api, daemon_api, since — when the package was updated, last_attempt {at, ok, by, code} and retry_after — what the watchdog did; null — the service is up to date (the fix is docker-restart). subs_update (not in brief) — how soon apps fetch the subscription, without walking the subscriptions: {update_interval, update_slow}, as in the sub-list reply; no subscriptions module — null. subnet_overlaps — profiles whose subnets overlap (the Amnezia app puts its containers so, and adopting takes them as they are): [{profile, subnet, with — overlapping profiles, fixed — this profile's subnet cannot be changed (an adopted old container on wg0), move — the way out: {profile — which one to move, subnet — a free subnet, keyless — how many of its people have no key on the server} or null}]; the way out is profile-subnet with that profile and subnet. brief=on — a summary for frequent polling: without ports, mode_port_mismatch, site, key_hosts, endpoint_effective, endpoint_auto, subnet_overlaps and subs_update (these fields are absent). lines_check (in brief too) — the lines on the server: no_20 — profiles are installed but neither 2.0 nor 1.x (old app versions and Keenetic routers cannot connect), shared — [{line, profiles}] lines held by two profiles or more (such profiles have line_shared=true in profiles), missing — lines of the 2.0 / 3.1 pair that are absent, reline — {profile, from, line, port, title}: our own profile that can be moved to the missing line (profile-reline; the app's profile — never), or null, install — {profile, line}: nothing to move, and the missing line goes to a free slot via profile-install without line, or null, text — the same in words. free_lines (in brief too) — {slot: line} of free slots: which line profile-install without line puts there. dupline_fix (in brief too) — a bug of earlier versions found by the migration: our own 3.1 repeats the 3.1 adopted from the app and there is no 2.0 — {profile, from, line, port, title, users, text, detected_at}, the human fixes it (profile-reline), or null. Profiles in profiles carry imported — adopted from the Amnezia app, and title — how the profile is named to people: «AmneziaWG 3.1 · port 6714», adopted — «… · from the app» (never show the awg2/awg3 slot names to people)"
+      }
+    },
+    "profiles-status": {
+      "mcp": "profiles_list",
+      "readonly": true,
+      "destructive": false,
+      "params": {},
+      "description": {
+        "ru": "Список профилей с контейнером, портом, линейкой, состоянием, версией образа и числом пиров; port_published=false — контейнер работает, а порт Docker не опубликовал (связи нет, лечится profile-repair); subnet_fixed=true — подсеть профилю не сменить (подхваченный старый контейнер на wg0). subnet_overlaps — пересечения подсетей профилей и выход из них, как в status",
+        "en": "Profiles with container, port, line, state, image version and peer count; port_published=false — the container runs but Docker did not publish its port (no connection, profile-repair fixes it); subnet_fixed=true — the profile's subnet cannot be changed (an adopted old container on wg0). subnet_overlaps — overlapping profile subnets and the way out, as in status"
+      }
+    },
+    "quality": {
+      "mcp": "diagnose",
+      "readonly": true,
+      "destructive": false,
+      "params": {},
+      "description": {
+        "ru": "Диагностика: Docker (docker_info — версии клиента, демона и бинаря на диске; mismatch — рассогласование API, stale — пакет обновлён, а служба старая), ip_forward, занятость и публикация портов профилей, сеть amnezia-dns-net, свободное место, ключи сервера, таймеры, порты 80/443",
+        "en": "Diagnostics: Docker (docker_info — client, daemon and on-disk binary versions; mismatch — API mismatch, stale — the package was updated but the service is still the old one), ip_forward, profile port usage and publication, amnezia-dns-net, disk space, server keys, timers, ports 80/443"
+      }
+    },
+    "traffic": {
+      "mcp": "traffic_report",
+      "readonly": true,
+      "destructive": false,
+      "params": {},
+      "description": {
+        "ru": "Трафик и последние рукопожатия по профилям и пользователям",
+        "en": "Traffic and last handshakes per profile and per user"
+      }
+    },
+    "edge-status": {
+      "mcp": "edge_status",
+      "readonly": true,
+      "destructive": false,
+      "params": {},
+      "description": {
+        "ru": "Несколько внешних адресов сервера: по каждому адресу — пакеты клиентов за 15 минут, час и сутки, число пользователей, чьи ключи на него смотрят, и вердикт сторожа: ok — принимает; dark — замолчал, хотя в это время обычно занят, а у других адресов трафик идёт (похоже на блокировку адреса); quiet — тихо, но в это время обычно тоже; quiet-all — тихо у всех; unused — на адрес не смотрит ни один ключ. count — сколько внешних адресов у машины, при count < 2 сторожить нечего. domain_endpoint=true — в ключах домен, адрес выбирает DNS: пользователи без своего адреса считаются на каждом адресе, со своим — на своём. dns — A-записи домена из ключей (state: ok/partial/elsewhere/none/unknown, a, foreign — чужие адреса), in_dns у адреса — есть ли он в них; доменные пользователи считаются только на адресах из A-записей; elsewhere/none — сюда по домену не приходит никто; DNS не ответил — по последнему удачному ответу",
+        "en": "Several external server addresses: per address — client packets over 15 minutes, an hour and a day, the number of users whose keys point at it, and the watchdog verdict: ok — receiving; dark — went silent although usually busy at this time while other addresses have traffic (looks like the address is blocked); quiet — silent but usually silent at this time too; quiet-all — silent everywhere; unused — no key points at it. count — how many external addresses the machine has, with count < 2 there is nothing to watch. domain_endpoint=true — keys carry a domain, DNS picks the address: users without an own address are counted on every address, users with one on theirs. dns — the A records of the key domain (state: ok/partial/elsewhere/none/unknown, a, foreign — addresses of other machines), in_dns per address — whether it is among them; domain users are counted only on addresses from the A records; elsewhere/none — nobody reaches this server by the domain; DNS did not answer — the last good answer is used"
+      }
+    },
+    "logs-tail": {
+      "mcp": "logs_tail",
+      "readonly": true,
+      "destructive": false,
+      "params": {
+        "component": {
+          "ref": "component",
+          "required": true
+        },
+        "lines": {
+          "ref": "lines",
+          "required": false,
+          "default": 100
+        }
+      },
+      "description": {
+        "ru": "Последние строки лога компонента. У component=mcp это журнал действий моста: там лежат имена вызванных действий, их аргументы и адреса, с которых их звали — обращайся с ним как с личными данными",
+        "en": "Last log lines of a component. With component=mcp this is the bridge action log: it holds the names of the actions called, their arguments and the addresses they came from — treat it as personal data"
+      }
+    },
+    "logs-enforce": {
+      "mcp": "logs_enforce",
+      "readonly": false,
+      "destructive": false,
+      "params": {},
+      "description": {
+        "ru": "Применить бюджет логов сейчас: подрезать то, что вылезло за предел (обычно это делает таймер раз в сутки)",
+        "en": "Apply the log budget now: trim what is over the limit (the timer normally does it daily)"
+      }
+    },
+    "logs-status": {
+      "mcp": "logs_status",
+      "readonly": true,
+      "destructive": false,
+      "params": {},
+      "description": {
+        "ru": "Размеры логов по участкам диска и бюджет: areas[].area — journal, nginx, goamnezia, docker; свободное место на диске отдельным полем free_mb",
+        "en": "Log sizes by disk area and the budget: areas[].area is journal, nginx, goamnezia, docker; free disk space comes as a separate free_mb field"
+      }
+    },
+    "profile-install": {
+      "mcp": "profile_install",
+      "readonly": false,
+      "destructive": false,
+      "params": {
+        "profile": {
+          "ref": "profile",
+          "required": true
+        },
+        "port": {
+          "ref": "port",
+          "required": false
+        },
+        "preset": {
+          "ref": "preset",
+          "required": false,
+          "default": "default"
+        },
+        "subnet": {
+          "ref": "subnet",
+          "required": false
+        },
+        "line": {
+          "ref": "line",
+          "required": false
+        }
+      },
+      "description": {
+        "ru": "Установить профиль: собрать образ, поднять контейнер, сгенерировать параметры линейки, открыть порт; subnet — своя подсеть профиля (частная, маска /20–/24, без пересечений с другими профилями сервера — и подхваченными у приложения Amnezia, по их фактической подсети, — с сетями Docker и с ещё не подхваченными контейнерами приложения; пересечение — subnet_overlap со свободной подсетью в тексте), нужна, когда у клиента или на роутере уже есть туннели с такими адресами; не передана — по умолчанию, а занята — первая свободная. line — линия по просьбе: 2.0 или 3.1 на awg2 и awg3 (1.x — только awg1, иначе invalid_line); без неё — недостающая линия пары: по месту (awg2 — 2.0, awg3 — 3.1), а если другое место пары уже держит эту линию (подхваченный amnezia-awg2 с 3.1), — вторая из пары (свободное место заранее подписано линией в free_lines действия status). Ответ — line, которая встала",
+        "en": "Install a profile: build image, run container, generate line parameters, open the port; subnet — the profile's own subnet (private, /20–/24 mask, no overlap with other profiles of the server — adopted from the Amnezia app ones too, by their actual subnet — with Docker networks and with app containers not adopted yet; an overlap is subnet_overlap with a free subnet in the message), needed when the client or the router already has tunnels with such addresses; omitted — the default, and if it is taken, the first free one. line — the requested line: 2.0 or 3.1 on awg2 and awg3 (1.x — awg1 only, otherwise invalid_line); without it — the missing line of the pair: by the slot (awg2 — 2.0, awg3 — 3.1), and if the other slot of the pair already holds this line (an adopted amnezia-awg2 with 3.1), the other line of the pair (a free slot is labelled with its line in advance in free_lines of the status action). Reply — the line that was installed"
+      }
+    },
+    "profile-remove": {
+      "mcp": "profile_remove",
+      "readonly": false,
+      "destructive": true,
+      "params": {
+        "profile": {
+          "ref": "profile",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Удалить профиль и его контейнер; ключи пользователей этого профиля перестают работать",
+        "en": "Remove a profile and its container; user keys of that profile stop working"
+      }
+    },
+    "profile-remove-preview": {
+      "mcp": null,
+      "readonly": true,
+      "destructive": false,
+      "params": {
+        "profile": {
+          "ref": "profile",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Что «Удалить профиль» заберёт у пользователей — только чтение, до согласия, ничего не меняет: holders — у скольких пользователей ключ на профиле, pages — сколько страниц подключения перестанет работать (в них был только этот профиль: удаление их снимает), page_users — у кого (имена, без адресов страниц), text — то же словами на языке вызова (пусто — таких страниц нет), title — подпись профиля. Профиль не установлен — profile_not_installed. Агентам не публикуется",
+        "en": "What «Remove profile» takes from users — read only, before the consent, changes nothing: holders — how many users have a key on the profile, pages — how many connection pages stop working (they had only this profile: the removal revokes them), page_users — whose (names, no page addresses), text — the same in words in the caller's language (empty — no such pages), title — the profile's caption. Profile not installed — profile_not_installed. Not published to agents"
+      }
+    },
+    "profile-restart": {
+      "mcp": "profile_restart",
+      "readonly": false,
+      "destructive": true,
+      "params": {
+        "profile": {
+          "ref": "profile",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Перезапустить контейнер профиля. Рвёт связь ВСЕМ, кто сейчас подключён к этому профилю; клиенты возвращаются сами за несколько секунд. Ключи и параметры не меняются",
+        "en": "Restart the profile container. Breaks the connection for EVERYONE currently connected to this profile; clients come back on their own within seconds. Keys and parameters do not change"
+      }
+    },
+    "profiles-restart": {
+      "mcp": "profiles_restart",
+      "readonly": false,
+      "destructive": true,
+      "params": {},
+      "description": {
+        "ru": "Перезапустить контейнеры ВСЕХ установленных профилей по очереди (3.1 → 2.0 → 1.x) — то же, что profile-restart по каждому. Рвёт связь всем подключённым; клиенты возвращаются сами. Ответ: restarted[] и failed[] ({profile, code, message}); не поднялся хоть один — отказ restart_failed; профилей нет — no_profiles. Бот, панель, MCP и nginx не перезапускаются",
+        "en": "Restart the containers of ALL installed profiles one by one (3.1 → 2.0 → 1.x) — the same as profile-restart for each. Breaks the connection for everyone connected; clients come back on their own. Reply: restarted[] and failed[] ({profile, code, message}); if any fails to come up — restart_failed; no profiles — no_profiles. The bot, panel, MCP and nginx are not restarted"
+      }
+    },
+    "docker-restart": {
+      "mcp": "docker_restart",
+      "readonly": false,
+      "destructive": true,
+      "params": {},
+      "description": {
+        "ru": "Перезапустить службу Docker целиком (systemctl restart docker) и поднять профили тем же путём, что после перезапуска профиля: интерфейс, порт, изоляция клиентов, соседи в сети профиля, goWARP. Нужен, когда пакет Docker обновлён, а служба осталась старой (status.docker_stale не null; сторож делает это сам, когда к VPN никто не подключён), или Docker ведёт себя странно. VPN пропадает у ВСЕХ на 10–30 секунд; клиенты возвращаются сами. Ответ: duration_s, restarted[], failed[] ({profile, code, message}), daemon_before, daemon_after (и daemon_before_label, daemon_after_label — что показать человеку: при одной версии — сборка), binary_version, stale; отказ — docker_restart_failed (systemctl отказал), docker_restart_timeout (демон не ответил), docker_still_stale (служба осталась старой), restart_failed (не поднялся профиль), в command — ручная команда",
+        "en": "Restart the whole Docker service (systemctl restart docker) and bring the profiles up the same way as after a profile restart: interface, port, client isolation, neighbours in the profile network, goWARP. Needed when the Docker package was updated but the service is still the old one (status.docker_stale is not null; the watchdog does it by itself when nobody is connected to the VPN), or when Docker misbehaves. The VPN drops for EVERYONE for 10–30 seconds; clients come back on their own. Reply: duration_s, restarted[], failed[] ({profile, code, message}), daemon_before, daemon_after (plus daemon_before_label, daemon_after_label — what to show a person: the build when the version is the same), binary_version, stale; refusals — docker_restart_failed (systemctl refused), docker_restart_timeout (the daemon did not answer), docker_still_stale (the service is still the old one), restart_failed (a profile did not come up), command carries the manual command"
+      }
+    },
+    "profile-port": {
+      "mcp": "profile_set_port",
+      "readonly": false,
+      "destructive": false,
+      "params": {
+        "profile": {
+          "ref": "profile",
+          "required": true
+        },
+        "port": {
+          "ref": "port",
+          "required": true
+        },
+        "adopted_confirm": {
+          "ref": "adopted_confirm",
+          "required": false
+        }
+      },
+      "description": {
+        "ru": "Сменить UDP-порт профиля (пересоздание контейнера, ключи не меняются, меняется только Endpoint). У профиля, подхваченного у приложения Amnezia, где у людей нет ключей на сервере, перенос отключит их без возможности переслать новые конфиги — такой отклоняется кодом adopted_keyless (в тексте — сколько таких людей), пока не передано adopted_confirm",
+        "en": "Change the profile UDP port (container recreated, keys unchanged, only Endpoint changes). On a profile adopted from the Amnezia app whose people have no keys on the server the move cuts them off with no way to re-send configs — it is refused with code adopted_keyless (the message names how many such people) until adopted_confirm is passed"
+      }
+    },
+    "profile-params": {
+      "mcp": "profile_params",
+      "readonly": true,
+      "destructive": false,
+      "params": {
+        "profile": {
+          "ref": "profile",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Показать параметры маскировки профиля",
+        "en": "Show profile obfuscation parameters"
+      }
+    },
+    "profile-regen": {
+      "mcp": "profile_regen",
+      "readonly": false,
+      "destructive": true,
+      "params": {
+        "profile": {
+          "ref": "profile",
+          "required": true
+        },
+        "preset": {
+          "ref": "preset",
+          "required": false,
+          "default": "default"
+        }
+      },
+      "description": {
+        "ru": "Перегенерировать параметры маскировки профиля; все ключи профиля надо перевыпустить",
+        "en": "Regenerate profile obfuscation parameters; all keys of the profile must be reissued"
+      }
+    },
+    "profile-set-param": {
+      "mcp": "profile_set_param",
+      "readonly": false,
+      "destructive": true,
+      "params": {
+        "profile": {
+          "ref": "profile",
+          "required": true
+        },
+        "key": {
+          "ref": "param_key",
+          "required": true
+        },
+        "value": {
+          "ref": "param_value",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Изменить один параметр профиля (как в настройках приложения Amnezia) с проверкой по правилам линейки; серверные параметры (S1–S4, H1–H4, HeaderProtectionKey, RandomTrailers, DisableCookies) требуют перевыпуска ключей, клиентские (Jc, Jmin, Jmax, I1–I5, MTU, PersistentKeepalive, тайминги) действуют для новых ключей. С 1.0.13 — пределы словами (params_invalid): тайминги 3.1 и ContentPaddingAddition в коридоре вокруг значений приложения (RekeyAfterTime 60–120, RekeyTimeout 3–10, RejectAfterTime 150–180, KeepaliveTimeout 5–15, MaxHandshakeAttempts 10–30, ContentPaddingAddition 0–1400), Jc × Jmax до 16384, Jc + число I1–I5 до 127, при RandomTrailers — без широких H у S, отличных от S4. Не применилось (контейнер не поднялся) — прежнее значение возвращается: param_rolled_back или param_apply_failed. В ответе clients_update и result.steps — кому нужен новый конфиг (подписки обновятся сами, ключи vpn:// и .conf — выдать заново)",
+        "en": "Change a single profile parameter (like the Amnezia app settings) validated by line rules; server-side params (S1–S4, H1–H4, HeaderProtectionKey, RandomTrailers, DisableCookies) require key reissue, client-side ones (Jc, Jmin, Jmax, I1–I5, MTU, PersistentKeepalive, timings) apply to new keys. Since 1.0.13 — limits in words (params_invalid): 3.1 timings and ContentPaddingAddition within a corridor around the app values (RekeyAfterTime 60–120, RekeyTimeout 3–10, RejectAfterTime 150–180, KeepaliveTimeout 5–15, MaxHandshakeAttempts 10–30, ContentPaddingAddition 0–1400), Jc × Jmax up to 16384, Jc + number of I1–I5 up to 127, with RandomTrailers no wide H for S that differ from S4. When it does not apply (the container does not come up) the previous value is put back: param_rolled_back or param_apply_failed. The reply carries clients_update and result.steps — who needs a new config (subscriptions update by themselves, vpn:// keys and .conf files have to be handed out again)"
+      }
+    },
+    "profile-fix-s4": {
+      "mcp": null,
+      "readonly": false,
+      "destructive": true,
+      "params": {
+        "profile": {
+          "ref": "profile",
+          "required": true
+        },
+        "adopted_confirm": {
+          "ref": "adopted_confirm",
+          "required": false
+        }
+      },
+      "description": {
+        "ru": "Исправить S4 у профиля с риском пакета (packet_risk в status и profiles-status: при стандартном MTU 1280 пакет данных 1280 + 80 + S4 больше 1400, то есть S4 > 40 — у профилей 2.0, выданных до 1.0.12; на мобильном интернете, PPPoE и у части хостеров скачивание стоит). Новый S4 12–24 с попарно различными размерами пакетов S1–S4 — тем же путём, что серверный параметр в profile-set-param: контейнер перезапускается (клиенты переподключатся сами за 15–25 с), приватные ключи людей прежние, страницы подключения и подписки отдают новое сами. Ответ: s4_old, s4, packet_old, packet, budget, restarted, engine, update_hours и кому что делать — subscription (обновится само), page (открыть страницу снова), key (импортировать ключ заново), app (ключ из приложения Amnezia — поделиться заново или перевыпустить), steps — те же указания словами. Отказы: s4_safe (риска нет), adopted_keyless (подхвачен у приложения и у людей ключи только в нём — нужен adopted_confirm=<тот профиль>). Агентам не публикуется",
+        "en": "Fix S4 of a profile with a packet risk (packet_risk in status and profiles-status: at the standard MTU 1280 the 1280 + 80 + S4 data packet is larger than 1400, i.e. S4 > 40 — 2.0 profiles issued before 1.0.12; downloads stall on mobile internet, PPPoE and some hosting providers). A new S4 of 12–24 with pairwise distinct S1–S4 packet sizes, applied the same way as a server-side parameter in profile-set-param: the container restarts (clients reconnect by themselves within 15–25 s), people's private keys stay, connection pages and subscriptions serve the new values by themselves. Reply: s4_old, s4, packet_old, packet, budget, restarted, engine, update_hours and who has to do what — subscription (updates itself), page (open the page again), key (import the key anew), app (key from the Amnezia app — share again or reissue), steps — the same in words. Refusals: s4_safe (no risk), adopted_keyless (adopted from the app and people's keys live only there — needs adopted_confirm=<that profile>). Not published to agents"
+      }
+    },
+    "profile-reline": {
+      "mcp": null,
+      "readonly": false,
+      "destructive": true,
+      "params": {
+        "profile": {
+          "ref": "profile",
+          "required": true
+        },
+        "line": {
+          "ref": "line",
+          "required": false
+        },
+        "keys_to_others": {
+          "ref": "onoff",
+          "required": false,
+          "default": "off"
+        }
+      },
+      "description": {
+        "ru": "Переставить свой профиль на вторую линию пары 2.0 / 3.1 (lines_check.reline в status): профиль goAmnezia повторяет линию другого (подхваченной у приложения Amnezia 3.1), а второй линии на сервере нет. Профиль удаляется и ставится снова на то же место с линией line (без неё — вторая линия пары), прежними портом, подсетью и пресетом; людям, у кого был ключ на нём, — ключи на новом профиле; страницы подключения остаются и отдают новый ключ. Ответ: line_old, line, port, subnet, title, users (кому выдан ключ), failed, update_hours и кому что делать — subscription (обновится сама), page (открыть страницу заново), key (выдать ключ или файл заново), steps — те же указания словами. Отказы: reline_adopted (профиль подхвачен у приложения — его не трогаем никогда), reline_needless (линия не повторяется или вторая линия уже есть), invalid_line, reline_rolled_back (новая линия не встала — вернули прежнюю; в message — кому ключи выданы и что им делать, кому выдать в карточке пользователя), reline_partial (профиль записан, а контейнер не поднялся — поднять заново из копии состояния; в message — кому ключи выданы и кому выдать), reline_failed; до удаления — low_disk, docker_unreachable, params_failed (ничего не тронуто). keys_to_others=on — тем же действием ключ на новой линии и остальным пользователям, у кого его на профиле не было (пользователи приложения, новые): в ответе others (кому выдан) и others_failed [{name, code, message}] (у кого ошибка), в steps — шаги others и others_failed; без него этих полей нет. Агентам не публикуется",
+        "en": "Move our own profile to the other line of the 2.0 / 3.1 pair (lines_check.reline in status): a goAmnezia profile repeats the line of another one (an adopted Amnezia app 3.1), and the other line is not on the server. The profile is removed and installed again in the same slot with line line (without it — the other line of the pair), the same port, subnet and preset; people who had a key on it get keys on the new profile; connection pages stay and serve the new key. Reply: line_old, line, port, subnet, title, users (who got a key), failed, update_hours and who has to do what — subscription (updates itself), page (open the page again), key (hand out the key or file again), steps — the same in words. Refusals: reline_adopted (the profile is adopted from the app — it is never touched), reline_needless (the line is not repeated or the other line is already there), invalid_line, reline_rolled_back (the new line did not come up — the former one is back; message says who got keys and what they do, and who has to get them in the user's card), reline_partial (the profile is written but the container did not come up — recreate it from the saved state; message says who got keys and who has to get them), reline_failed; before the removal — low_disk, docker_unreachable, params_failed (nothing touched). keys_to_others=on — in the same action a key on the new line also goes to the other users who had none on the profile (the app's users, new ones): the reply carries others (who got one) and others_failed [{name, code, message}] (who did not), steps carry others and others_failed; without it these fields are absent. Not published to agents"
+      }
+    },
+    "profile-subnet": {
+      "mcp": "profile_set_subnet",
+      "readonly": false,
+      "destructive": true,
+      "params": {
+        "profile": {
+          "ref": "profile",
+          "required": true
+        },
+        "subnet": {
+          "ref": "subnet",
+          "required": true
+        },
+        "adopted_confirm": {
+          "ref": "adopted_confirm",
+          "required": false
+        }
+      },
+      "description": {
+        "ru": "Сменить подсеть профиля: пиры перенумеровываются по порядку, конфиг сервера переписывается, всем пользователям профиля нужно заново импортировать ключ. Подсеть не должна пересекаться с другими профилями (и подхваченными), сетями Docker и не подхваченными контейнерами приложения Amnezia — иначе subnet_overlap, в тексте свободная подсеть. Подхваченному старому контейнеру на wg0 подсеть не сменить — subnet_legacy; если его подсеть с кем-то пересекается, в тексте выход: какой профиль перенести и на какую свободную подсеть (subnet_overlaps в status). Профиль с людьми приложения Amnezia без ключа на сервере — только с adopted_confirm=<тот профиль> (их ключи с прежним адресом перестанут проходить), иначе adopted_keyless до всякого изменения",
+        "en": "Change the profile subnet: peers are renumbered in order, the server config is rewritten, every user of the profile must re-import the key. The subnet must not overlap other profiles (adopted ones too), Docker networks or Amnezia app containers that are not adopted yet — otherwise subnet_overlap, the message names a free subnet. An adopted old container on wg0 cannot change its subnet — subnet_legacy; if its subnet overlaps another profile, the message names the way out: which profile to move and to which free subnet (subnet_overlaps in status). A profile with Amnezia app people who have no key on the server — only with adopted_confirm=<that profile> (their keys with the old address stop passing), otherwise adopted_keyless before any change"
+      }
+    },
+    "profile-mtu": {
+      "mcp": "profile_set_mtu",
+      "readonly": false,
+      "destructive": false,
+      "params": {
+        "profile": {
+          "ref": "profile",
+          "required": true
+        },
+        "mtu": {
+          "ref": "mtu",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Задать MTU профиля: строка MTU в конфиге сервера и живой интерфейс — сразу, без перезапуска; клиентские конфиги — при новых выдачах ключей. Стандарт и минимум — 1280 (ниже — отказ: туннель не поднимется у клиентов с IPv6), на проводном интернете — до 1320. В ответе packet (пакет данных MTU + 80 + S4) и warnings — что такой MTU сломает наверняка: path (пакет больше 1440 — на части хостеров и сетей скачивание встанет); warning — те же предупреждения словами",
+        "en": "Set the profile MTU: the MTU line of the server config and the live interface right away, without a restart; client configs — for newly issued keys. The standard and the minimum is 1280 (below it — refused: the tunnel will not come up for clients with IPv6), up to 1320 on wired internet. The reply carries packet (the MTU + 80 + S4 data packet) and warnings — what such an MTU surely breaks: path (packet larger than 1440 — downloads stall at some hosting providers and networks); warning — the same in words"
+      }
+    },
+    "endpoint-set": {
+      "mcp": "endpoint_set",
+      "readonly": false,
+      "destructive": false,
+      "params": {
+        "host": {
+          "ref": "host",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Задать хост Endpoint для ключей (домен или IP); действует на новые выдачи. Значение обязательно: ПУСТАЯ строка — законный ответ «по умолчанию» (в режиме Pro домен сервера, иначе IP сервера), а вот вызов вообще без host раньше молча стирал Endpoint и отвечал успехом",
+        "en": "Set the Endpoint host for keys (domain or IP); applies to new issues. The value is required: an EMPTY string legitimately means «the default» (the server domain in Pro mode, otherwise the server IP), while a call with no host at all used to wipe the Endpoint silently and report success"
+      }
+    },
+    "user-add": {
+      "mcp": "user_add",
+      "readonly": false,
+      "destructive": false,
+      "params": {
+        "name": {
+          "ref": "name",
+          "required": true
+        },
+        "label": {
+          "ref": "label",
+          "required": false
+        },
+        "profiles": {
+          "ref": "profiles",
+          "required": false
+        },
+        "quota_gb": {
+          "ref": "quota_gb",
+          "required": false,
+          "default": 0
+        },
+        "days": {
+          "ref": "days",
+          "required": false,
+          "default": 0
+        }
+      },
+      "description": {
+        "ru": "Создать пользователя и его пиры в указанных профилях; параметр profiles не передан — во всех установленных, пустая строка — отказ no_profiles_picked",
+        "en": "Create a user and their peers in the given profiles; omit profiles for every installed one, an empty string is refused with no_profiles_picked"
+      }
+    },
+    "name-suggest": {
+      "mcp": "name_suggest",
+      "readonly": true,
+      "destructive": false,
+      "params": {
+        "lang": {
+          "ref": "lang",
+          "required": false
+        },
+        "exclude": {
+          "ref": "name",
+          "required": false
+        }
+      },
+      "description": {
+        "ru": "Случайное имя для нового человека — «прилагательное + столица» из набора ядра: id латиницей (foggy_london) и label на языке lang (не передан — на языке установки). Не совпадает ни с id, ни с подписью уже заведённых людей и не равно exclude (вариант, который уже на экране). Ничего не меняет: имя занимает user-add (name=id, label=label). Отказы: names_missing (набора нет), names_exhausted (свободных не осталось)",
+        "en": "A random name for a new person — «adjective + capital» from the core's set: an ASCII id (foggy_london) and a label in lang (omitted — the install language). Never an existing person's id or label, never exclude (the variant already on screen). Changes nothing: user-add takes the name (name=id, label=label). Refusals: names_missing (no set), names_exhausted (none left)"
+      }
+    },
+    "users-add-bulk": {
+      "mcp": "users_add_bulk",
+      "readonly": false,
+      "destructive": false,
+      "params": {
+        "count": {
+          "ref": "bulk_count",
+          "required": true
+        },
+        "profiles": {
+          "ref": "profiles",
+          "required": false
+        },
+        "prefix": {
+          "ref": "name_prefix",
+          "required": false
+        },
+        "quota_gb": {
+          "ref": "quota_gb",
+          "required": false,
+          "default": 0
+        },
+        "days": {
+          "ref": "days",
+          "required": false,
+          "default": 0
+        },
+        "lang": {
+          "ref": "lang",
+          "required": false
+        }
+      },
+      "description": {
+        "ru": "Добавить сразу несколько человек (count, 1–100) тем же путём, что user-add, с одним применением к контейнерам в конце. Имена: prefix передан — <prefix>-01…NN с номера после уже заведённых, иначе случайные «прилагательное + столица» (подпись на языке lang). profiles не передан — во все установленные, пустая строка — отказ no_profiles_picked. До изменений отказывает: мест в подсети профиля меньше count — subnet_full, свободных случайных имён меньше — names_exhausted, invalid_prefix. Ответ: requested, count, added [{name, label}], profiles, prefix, partial, failed. Сбой на середине — success с partial=true и failed {name, code, message}: добавленные до него остаются. Ключей в ответе нет — их выдаёт user-key по каждому имени. Долгое: на сотню — минута-две",
+        "en": "Add several people at once (count, 1–100) the same way as user-add, with one apply to the containers at the end. Names: with prefix — <prefix>-01…NN numbered after the ones already made, otherwise random «adjective + capital» names (label in lang). Omit profiles for every installed one, an empty string is refused with no_profiles_picked. Refuses before any change: fewer free places in a profile subnet than count — subnet_full, fewer free random names — names_exhausted, invalid_prefix. Reply: requested, count, added [{name, label}], profiles, prefix, partial, failed. A failure midway is success with partial=true and failed {name, code, message}: the people added before it stay. No keys in the reply — user-key gives them per name. Long: a minute or two per hundred"
+      }
+    },
+    "user-del": {
+      "mcp": "user_delete",
+      "readonly": false,
+      "destructive": true,
+      "params": {
+        "name": {
+          "ref": "name",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Удалить пользователя и все его пиры",
+        "en": "Delete a user and all their peers"
+      }
+    },
+    "users-del-bulk-preview": {
+      "mcp": "users_del_bulk_preview",
+      "readonly": true,
+      "destructive": false,
+      "params": {
+        "names": {
+          "ref": "name_list",
+          "required": false
+        },
+        "prefix": {
+          "ref": "del_prefix",
+          "required": false
+        },
+        "state": {
+          "ref": "user_state",
+          "required": false
+        }
+      },
+      "description": {
+        "ru": "Кого удалит users-del-bulk при таком выборе — только чтение, ничего не меняет. Ровно один способ: names (имена через запятую, 1–100), prefix (все <prefix>-<число>, как их заводит users-add-bulk) или state (disabled — выключены руками, expired — срок вышел, quota — лимит трафика исчерпан); иначе invalid_selection. Ответ: mode, value, count, max (100), too_many, selected [{name, label}], missing (имена из names, которых нет). Покажите человеку selected и count: count — то самое число для confirm у users-del-bulk",
+        "en": "Who users-del-bulk would delete with this selection — read only, changes nothing. Exactly one way: names (comma-separated, 1–100), prefix (every <prefix>-<number>, the way users-add-bulk makes them) or state (disabled — turned off by hand, expired — the term is over, quota — the traffic quota is used up); otherwise invalid_selection. Reply: mode, value, count, max (100), too_many, selected [{name, label}], missing (names from names that do not exist). Show the human selected and count: count is exactly the number for confirm of users-del-bulk"
+      }
+    },
+    "users-del-bulk": {
+      "mcp": "users_del_bulk",
+      "readonly": false,
+      "destructive": true,
+      "params": {
+        "confirm": {
+          "ref": "bulk_confirm",
+          "required": true
+        },
+        "names": {
+          "ref": "name_list",
+          "required": false
+        },
+        "prefix": {
+          "ref": "del_prefix",
+          "required": false
+        },
+        "state": {
+          "ref": "user_state",
+          "required": false
+        }
+      },
+      "description": {
+        "ru": "Удалить сразу несколько человек (до 100) со всеми пирами — порядком user-del: выключить, применить к контейнерам пачками по 10, потом стереть записи и снять страницы подключения. Выбор — ровно одним способом, как у users-del-bulk-preview; сначала зовите его и покажите человеку список. confirm — число людей из предпросмотра: не совпало с выбранным в момент удаления — confirm_mismatch до изменений (в ответе matched — сколько выбрано сейчас); больше 100 — too_many, никого — nothing_selected, имени из names нет — user_not_found. Ответ: requested, count, deleted [..], kept [..], partial, failed, mode, value. Контейнер не принял пачку — она остаётся в списке выключенной (kept), удаление можно повторить; удалённые до неё удалены — success с partial=true и failed {name, code, message}; никого не удалили — отказ его кодом (user_del_failed, interrupted). Ключей в ответе нет",
+        "en": "Delete several people at once (up to 100) with all their peers — in the order of user-del: turn off, apply to the containers in batches of 10, then erase the records and revoke the connection pages. The selection is exactly one way, as in users-del-bulk-preview; call it first and show the human the list. confirm is the number of people from the preview: a mismatch with the selection at the moment of deletion is confirm_mismatch before any change (matched in the reply is how many are selected now); more than 100 — too_many, nobody — nothing_selected, a name from names does not exist — user_not_found. Reply: requested, count, deleted [..], kept [..], partial, failed, mode, value. If the container does not accept a batch, it stays in the list turned off (kept) and the deletion can be repeated; the people deleted before it are deleted — success with partial=true and failed {name, code, message}; nobody deleted — a refusal with its code (user_del_failed, interrupted). No keys in the reply"
+      }
+    },
+    "user-list": {
+      "mcp": "users_list",
+      "readonly": true,
+      "destructive": false,
+      "params": {},
+      "description": {
+        "ru": "Список пользователей с состоянием, профилями, трафиком, лимитом и сроком",
+        "en": "Users with state, profiles, traffic, quota and expiry"
+      }
+    },
+    "user-show": {
+      "mcp": "user_show",
+      "readonly": true,
+      "destructive": false,
+      "params": {
+        "name": {
+          "ref": "name",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Карточка пользователя без приватных ключей",
+        "en": "User card without private keys"
+      }
+    },
+    "user-key": {
+      "mcp": "user_get_key",
+      "readonly": true,
+      "secret": true,
+      "destructive": false,
+      "params": {
+        "name": {
+          "ref": "name",
+          "required": true
+        },
+        "profile": {
+          "ref": "profile",
+          "required": true
+        },
+        "format": {
+          "ref": "format",
+          "required": false,
+          "default": "all"
+        },
+        "endpoint": {
+          "ref": "key_endpoint",
+          "required": false
+        }
+      },
+      "description": {
+        "ru": "Выдать ключ пользователя для профиля: .conf, vpn://, QR (PNG base64); endpoint — тот же ключ с другим адресом сервера этой машины (разово; в ответе key_host / key_endpoint). ВНИМАНИЕ: в ответе — ПРИВАТНЫЙ КЛЮЧ клиента. Ничего не меняет на сервере, но это единственный инструмент, выдающий секрет: не пересылай ответ целиком, не клади его в переписку и в свои заметки",
+        "en": "Issue a user key for a profile: .conf, vpn://, QR (PNG base64); endpoint — the same key with another address of this server (one-off; key_host / key_endpoint in the answer). WARNING: the answer contains the client PRIVATE KEY. It changes nothing on the server, but it is the only tool that hands out a secret: do not forward the whole answer, do not put it into chat or your notes"
+      }
+    },
+    "user-rename": {
+      "mcp": "user_rename",
+      "readonly": false,
+      "destructive": false,
+      "params": {
+        "name": {
+          "ref": "name",
+          "required": true
+        },
+        "label": {
+          "ref": "label",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Сменить ОТОБРАЖАЕМОЕ имя (подпись) пользователя. Идентификатор (name), по которому зовут все остальные инструменты, не меняется — сменить его нельзя вовсе",
+        "en": "Change the user DISPLAY name (label). The identifier (name) used by every other tool does not change — it cannot be changed at all"
+      }
+    },
+    "user-enable": {
+      "mcp": "user_enable",
+      "readonly": false,
+      "destructive": false,
+      "params": {
+        "name": {
+          "ref": "name",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Включить пользователя (вернуть пиры в конфиги)",
+        "en": "Enable a user (put peers back into configs)"
+      }
+    },
+    "user-disable": {
+      "mcp": "user_disable",
+      "readonly": false,
+      "destructive": false,
+      "params": {
+        "name": {
+          "ref": "name",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Выключить пользователя (убрать пиры из конфигов, запись сохранить)",
+        "en": "Disable a user (remove peers from configs, keep the record)"
+      }
+    },
+    "user-quota": {
+      "mcp": "user_set_quota",
+      "readonly": false,
+      "destructive": false,
+      "params": {
+        "name": {
+          "ref": "name",
+          "required": true
+        },
+        "quota_gb": {
+          "ref": "quota_gb",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Задать лимит трафика пользователю в ГБ (0 — снять лимит). Считается по сумме принятого и отданного за всё время; при исчерпании сторож ВЫКЛЮЧАЕТ пользователя в течение пяти минут — его ключи перестают подключаться, пока лимит не поднимут. Выключенного лимитом новый лимит включает сам: re_enabled=true, enabled — включён ли сейчас",
+        "en": "Set the traffic limit for a user in GB (0 — no limit). Counted as the sum of received and sent for all time; when it runs out the watchdog DISABLES the user within five minutes — their keys stop connecting until the limit is raised. A user switched off by the limit is switched back on by a new limit: re_enabled=true, enabled — whether on now"
+      }
+    },
+    "user-expiry": {
+      "mcp": "user_set_expiry",
+      "readonly": false,
+      "destructive": false,
+      "params": {
+        "name": {
+          "ref": "name",
+          "required": true
+        },
+        "days": {
+          "ref": "days",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Задать срок действия доступа в днях от сегодня (0 — бессрочно). По истечении сторож ВЫКЛЮЧАЕТ пользователя в течение пяти минут; записи и ключи сохраняются, подключение прекращается. Выключенного по сроку продление включает само: re_enabled=true, enabled — включён ли сейчас",
+        "en": "Set the access expiry in days from today (0 — never). When it passes the watchdog DISABLES the user within five minutes; the record and the keys stay, the connection stops. A user switched off by the expiry is switched back on by an extension: re_enabled=true, enabled — whether on now"
+      }
+    },
+    "user-set-address": {
+      "mcp": "user_set_address",
+      "readonly": false,
+      "destructive": false,
+      "params": {
+        "name": {
+          "ref": "name",
+          "required": true
+        },
+        "ip": {
+          "ref": "server_address",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Задать пользователю свой адрес сервера в ключах — один из внешних IPv4 этой машины (когда адресов несколько, блокировка одного не роняет всех); пустая строка — вернуть общий адрес. Ключи НЕ перевыпускаются: меняется только адрес в строке Endpoint, но уже выданный конфиг смотрит на прежний адрес — при resend_required=true выдай ключ заново (user_get_key) и отправь человеку. Не действует, только когда в «Адрес сервера в ключах» вписан домен: тогда адрес выбирает DNS, и ответ говорит об этом (domain_endpoint=true); домен сервера по умолчанию (режим Pro) свой адрес не отменяет. Адреса, которого на машине нет, — отказ address_not_here; машина своих внешних адресов не видит (сервер за NAT, нет команды ip) — отказ addresses_unknown: свой адрес здесь задать нельзя, общий вернуть можно всегда",
+        "en": "Give a user their own server address in keys — one of this machine's external IPv4 addresses (with several addresses a block of one does not take everybody down); an empty string returns the common address. Keys are NOT reissued: only the address in the Endpoint line changes, yet a config already handed out still points to the old address — with resend_required=true issue the key again (user_get_key) and send it to the person. Has no effect only while a domain is set manually as the server address in keys: then DNS picks the address, and the reply says so (domain_endpoint=true); the server's default domain (Pro mode) does not override the own address. An address that is not on the machine is refused with address_not_here; when the machine does not see its external addresses (behind NAT, no ip command) the call is refused with addresses_unknown — an own address cannot be set there, the common one can always be restored"
+      }
+    },
+    "user-add-peer": {
+      "mcp": "user_add_profile",
+      "readonly": false,
+      "destructive": false,
+      "params": {
+        "name": {
+          "ref": "name",
+          "required": true
+        },
+        "profile": {
+          "ref": "profile",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Добавить пользователю конфигурацию ещё одного профиля",
+        "en": "Add another profile configuration to the user"
+      }
+    },
+    "user-del-peer": {
+      "mcp": "user_remove_profile",
+      "readonly": false,
+      "destructive": true,
+      "params": {
+        "name": {
+          "ref": "name",
+          "required": true
+        },
+        "profile": {
+          "ref": "profile",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Убрать у пользователя конфигурацию профиля",
+        "en": "Remove a profile configuration from the user"
+      }
+    },
+    "user-reissue-peer": {
+      "mcp": "user_reissue_key",
+      "readonly": false,
+      "destructive": true,
+      "params": {
+        "name": {
+          "ref": "name",
+          "required": true
+        },
+        "profile": {
+          "ref": "profile",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Перевыпустить ключ пользователя на профиле (старый конфиг перестаёт подключаться)",
+        "en": "Reissue the user's key on a profile (the old config stops connecting)"
+      }
+    },
+    "user-attach-key": {
+      "mcp": "user_attach_key",
+      "readonly": false,
+      "destructive": false,
+      "params": {
+        "name": {"ref": "name", "required": true},
+        "profile": {"ref": "profile", "required": false},
+        "config": {"ref": "key_material", "required": true, "stdin": true}
+      },
+      "description": {
+        "ru": "Привязать старый ключ человека, подхваченного из приложения Amnezia (у пира has_key=false): config — ссылка vpn:// или текст .conf, которые ему когда-то выдали. Ключ проверяется по открытому ключу пира; профиль можно не указывать — найдётся сам. После привязки ключ выдаётся как обычный, у человека ничего не меняется (в отличие от user_reissue_key). Ошибки: key_mismatch (ключ другого человека), server_mismatch (от другого сервера), already_has_key, config_unreadable",
+        "en": "Attach the old key of a person adopted from the Amnezia app (peer has_key=false): config is the vpn:// link or .conf text once issued to them. The key is checked against the peer's public key; the profile is optional — it is found automatically. Afterwards the key is issued as usual and nothing changes for the person (unlike user_reissue_key). Errors: key_mismatch (someone else's key), server_mismatch (another server), already_has_key, config_unreadable"
+      }
+    },
+    "backup-create": {
+      "mcp": "backup_create",
+      "readonly": false,
+      "destructive": false,
+      "params": {},
+      "description": {
+        "ru": "Создать бэкап (config, users, state контейнеров, .env бота, nginx и сертификаты)",
+        "en": "Create a backup (config, users, container state, bot .env, nginx and certificates)"
+      }
+    },
+    "backup-list": {
+      "mcp": "backup_list",
+      "readonly": true,
+      "destructive": false,
+      "params": {},
+      "description": {
+        "ru": "Список бэкапов",
+        "en": "List backups"
+      }
+    },
+    "backup-restore": {
+      "mcp": "backup_restore",
+      "readonly": false,
+      "destructive": true,
+      "params": {
+        "file": {
+          "ref": "file",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Восстановить из бэкапа, пересоздав контейнеры из сохранённого состояния. Понимает и архив «Удалить всё» (goamnezia-wipe-*). Действующие пароль панели, настройки бота и доступы агентов копия НЕ откатывает (из копии они берутся только на чистом сервере): что оставлено — поле kept_current, доступы из копии, удалённые после неё, — agents_not_restored. Сразу сверяет адрес сервера (переезд): server_ip, server_ip_changed",
+        "en": "Restore from a backup, recreating containers from saved state. Also understands a «Delete everything» archive (goamnezia-wipe-*). The backup does NOT roll back the current panel password, bot settings and agent grants (they are taken from it only on a clean server): what was kept is in kept_current, grants from the backup deleted since — in agents_not_restored. The server address is checked right away (a move): server_ip, server_ip_changed"
+      }
+    },
+    "import-scan": {
+      "mcp": "import_scan",
+      "readonly": true,
+      "destructive": false,
+      "params": {},
+      "description": {
+        "ru": "Найти контейнеры Amnezia на сервере (docker ps -a — и остановленные тоже) и показать их конфиги и пользователей: state (running/exited/restarting), protocol (awg, awg_legacy, xray, openvpn, cloak, shadowsocks, wireguard, ipsec, ssxray, dns, tor, sftp, socks5proxy), reason_text — что мешает подхвату, словами; subnet_overlap — профили, с чьей подсетью совпадает подсеть контейнера (подхвату не мешает). Демон не отвечает — отказ docker_unreachable, а не пустой список",
+        "en": "Find Amnezia containers on the server (docker ps -a — stopped ones too) and show their configs and users: state (running/exited/restarting), protocol (awg, awg_legacy, xray, openvpn, cloak, shadowsocks, wireguard, ipsec, ssxray, dns, tor, sftp, socks5proxy), reason_text — what prevents adopting, in words; subnet_overlap — profiles whose subnet the container's subnet matches (does not prevent adopting). Daemon not answering — the docker_unreachable error, not an empty list"
+      }
+    },
+    "import-adopt": {
+      "mcp": "import_adopt",
+      "readonly": false,
+      "destructive": false,
+      "params": {
+        "container": {
+          "ref": "container",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Подхватить существующий контейнер как профиль goAmnezia: профиль по имени и линейке из конфига, пользователи из clientsTable без приватных ключей (пометка imported), копия в state/; контейнер не пересоздаётся. Остановленный контейнер после подхвата запускается (started). Отмечает установку (installed), как profile-install. Подсеть, совпавшая с другим профилем (приложение Amnezia ставит свои контейнеры AmneziaWG на одну 10.8.1.0/24), подхвату не мешает: контейнер берётся как есть, а в ответе subnet_overlap — с кем совпала и выход (какой профиль перенести и на какую свободную подсеть, как subnet_overlaps в status); в message — то же словами",
+        "en": "Adopt an existing container as a goAmnezia profile: profile by name and line from its config, users from clientsTable without private keys (marked imported), a copy in state/; the container is not recreated. A stopped container is started after adopting (started). Marks the install as done (installed), like profile-install. A subnet matching another profile (the Amnezia app puts its AmneziaWG containers on one 10.8.1.0/24) does not prevent adopting: the container is taken as is, and subnet_overlap in the answer says with whom and the way out (which profile to move and to which free subnet, like subnet_overlaps in status); message says the same in words"
+      }
+    },
+    "import-reconcile": {
+      "mcp": "import_reconcile",
+      "readonly": false,
+      "destructive": false,
+      "params": {
+        "profile": {
+          "ref": "profile",
+          "required": true
+        },
+        "apply": {
+          "ref": "onoff",
+          "required": false,
+          "default": "off"
+        }
+      },
+      "description": {
+        "ru": "Сверить пиры контейнера профиля с users.json (приложение Amnezia могло добавить или удалить пира напрямую); apply=on — подхватить изменения: новые пиры станут импортированными пользователями, исчезнувшие помечаются неактивными",
+        "en": "Compare the profile container peers with users.json (the Amnezia app may have added or removed a peer directly); apply=on adopts the changes: new peers become imported users, vanished ones are marked inactive"
+      }
+    },
+    "upstream-check": {
+      "mcp": "upstream_check",
+      "readonly": true,
+      "destructive": false,
+      "params": {
+        "cached": {
+          "ref": "onoff",
+          "required": false
+        }
+      },
+      "description": {
+        "ru": "Проверить обновления официальных скриптов и образов Amnezia: тег релиза клиента (GitHub), новейший версионный тег образа (Docker Hub), хеши скриптов, новые плейсхолдеры («не поддержан»); сеть недоступна → код unreachable. cached=on — без сети: отчёт последней удачной суточной проверки (cached: true, summary — как status.upstream); проверок ещё не было → no_cached_check",
+        "en": "Check for updates of official Amnezia scripts and images: client release tag (GitHub), newest versioned image tag (Docker Hub), script hashes, new placeholders (\"unsupported\"); no network → code unreachable. cached=on — no network: the report of the last successful daily check (cached: true, summary — as status.upstream); no check yet → no_cached_check"
+      }
+    },
+    "upstream-update": {
+      "mcp": "upstream_update",
+      "readonly": false,
+      "destructive": true,
+      "params": {
+        "profile": {
+          "ref": "profile",
+          "required": true
+        },
+        "tag": {
+          "ref": "tag",
+          "required": false
+        }
+      },
+      "description": {
+        "ru": "Обновить ядро профиля из официального репозитория: бэкап → скрипты релиза → образ по дайджесту → пересоздание контейнера из state/ (ключи не меняются) → проверка → попытка отката при неудаче: update_failed — откат сделан, вмешательства не нужно; update_failed_no_rollback — откат НЕ сделан, контейнер снесён и не поднят, нужен человек; предыдущее хранится для upstream-rollback",
+        "en": "Update the profile core from the official repository: backup → release scripts → image by digest → container recreated from state/ (keys unchanged) → verification → rollback attempt on failure: update_failed — rolled back, no action needed; update_failed_no_rollback — NOT rolled back, the container is gone and not running, a human is needed; the previous version is kept for upstream-rollback"
+      }
+    },
+    "upstream-rollback": {
+      "mcp": "upstream_rollback",
+      "readonly": false,
+      "destructive": true,
+      "params": {
+        "profile": {
+          "ref": "profile",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Откатить ядро профиля на предыдущий образ и скрипты (хранится один шаг назад)",
+        "en": "Roll the profile core back to the previous image and scripts (one step back is kept)"
+      }
+    },
+    "core-update": {
+      "mcp": "core_update",
+      "readonly": false,
+      "destructive": true,
+      "params": {
+        "profile": {
+          "ref": "profile",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Пересоздать контейнер профиля на закреплённом образе из images.json без смены скриптов (ремонт или смена образа); ключи не меняются, бэкап делается сам",
+        "en": "Recreate the profile container on the pinned image from images.json without changing scripts (repair or image switch); keys unchanged, a backup is taken automatically"
+      }
+    },
+    "quota-tick": {
+      "mcp": null,
+      "readonly": false,
+      "destructive": false,
+      "params": {},
+      "description": {
+        "ru": "Тик таймера лимитов и сроков (goamnezia-quota.timer, 5 мин): дельты трафика, отключение превысивших, события боту",
+        "en": "Quota and expiry timer tick (goamnezia-quota.timer, 5 min): traffic deltas, disabling of users over limit, bot events"
+      }
+    },
+    "watch-tick": {
+      "mcp": null,
+      "readonly": false,
+      "destructive": false,
+      "params": {},
+      "description": {
+        "ru": "Тик сторожа контейнеров (goamnezia-watch.timer, 2 мин): контейнеры профилей работают и awg show отвечает, иначе docker start/restart и событие боту",
+        "en": "Container watchdog tick (goamnezia-watch.timer, 2 min): profile containers run and awg show answers, otherwise docker start/restart and a bot event"
+      }
+    },
+    "stats-tick": {
+      "mcp": null,
+      "readonly": false,
+      "destructive": false,
+      "params": {},
+      "description": {
+        "ru": "Тик статистики трафика (goamnezia-stats.timer, 10 мин): снимок по профилям и пользователям в stats.json с суточными итогами за 30 дней",
+        "en": "Traffic statistics tick (goamnezia-stats.timer, 10 min): per-profile and per-user snapshot into stats.json with 30 daily totals"
+      }
+    },
+    "upstream-tick": {
+      "mcp": null,
+      "readonly": false,
+      "destructive": false,
+      "params": {},
+      "description": {
+        "ru": "Тик проверки обновлений Amnezia (goamnezia-upstream.timer, раз в сутки): upstream-check и событие боту при новизне, без автообновления",
+        "en": "Amnezia update check tick (goamnezia-upstream.timer, daily): upstream-check and a bot event when something is new, no auto-update"
+      }
+    },
+    "change-mode": {
+      "mcp": "mode_set",
+      "readonly": false,
+      "destructive": false,
+      "params": {
+        "mode": {
+          "ref": "mode",
+          "required": true
+        },
+        "domain": {
+          "ref": "domain",
+          "required": false
+        }
+      },
+      "description": {
+        "ru": "Переключить режим lite / lite_site / pro; lite_site и pro — один и тот же сайт на домене, разница только в месте AmneziaWG, и переход между ними не трогает ни nginx, ни сертификат; домена нет или его A-запись ещё не указывает на сервер — сайт поднимается на запасном самоподписанном сертификате (в ответе dns_fallback=true, домен сохраняется; живой сайт на Let's Encrypt при смене домена на запасной не уходит — отказ certbot оставляет прежний домен); ответ несёт keys_host_before и keys_host — адрес в новых ключах до и после; контейнеры, ключи и порт профиля не трогаются Переход lite → lite_site/pro ПОДНИМАЕТ сайт и выпускает сертификат Let's Encrypt (если есть домен), а переход в lite СНИМАЕТ сайт и панель на домене вместе с ним.",
+        "en": "Switch mode lite / lite_site / pro; lite_site and pro share the very same site on the domain and differ only in where AmneziaWG sits, so switching between them touches neither nginx nor the certificate; with no domain, or while its A record does not point to the server yet, the site comes up on the self-signed fallback (the reply carries dns_fallback=true and the domain is kept; a live Let's Encrypt site changing its domain never drops to the fallback — a certbot refusal keeps the old domain); the reply carries keys_host_before and keys_host — the address in new keys before and after; containers, keys and the profile port are left alone Going lite → lite_site/pro BRINGS UP the site and issues a Let's Encrypt certificate (when a domain is set), while going to lite TAKES DOWN the site and the panel on the domain with it."
+      }
+    },
+    "lazy-check": {
+      "mcp": null,
+      "readonly": true,
+      "destructive": false,
+      "params": {
+        "domain": {
+          "ref": "domain_input",
+          "required": true
+        },
+        "keys": {
+          "ref": "lazy_keys",
+          "required": false,
+          "default": 5
+        }
+      },
+      "description": {
+        "ru": "Ленивый Pro (установка по одному домену): что будет на этом сервере — только чтение. Ответ: domain (punycode), domain_display, points_here (все A-записи сюда), a, aaaa, server_ips, cloudflare_proxied (домен за прокси Cloudflare: не отказ, ключи пойдут на IP), ports {tcp80, tcp443, udp443: {free, by, ours}} (by — кто держит порт, словами, у свободного null; своё — наш nginx и наши профили — свободно, и у него ours: true — человеку «занят нами»), app_containers [{name, line, port}] (контейнеры приложения Amnezia — подхватятся без вопроса), plan: pro | semi_pro (UDP 443 занят чужим или обе линии уже стоят на своих портах — сайт на 443, профили на своих портах) | blocked (TCP 80/443 заняты чужим или домен смотрит не сюда), reasons [код…]: dns_none, dns_elsewhere, dns_partial, dns_unknown, aaaa_foreign, cloudflare_proxied, tcp80_busy, tcp443_busy, tcp443_app, udp443_busy, no_line_for_443, awg2_container_busy; udp443_line — какая линия будет на UDP 443 (\"2.0\", \"3.1\"; null у semi_pro и blocked); keys_have — живые ключи прошлых заходов (засчитываются), keys_new — сколько ключей сценарий заведёт на самом деле из keys (1–20, по умолчанию 5)",
+        "en": "Lazy Pro (an install from a single domain): what would happen on this server — read-only. Reply: domain (punycode), domain_display, points_here (every A record points here), a, aaaa, server_ips, cloudflare_proxied (the domain is behind the Cloudflare proxy: not a refusal, keys go to the IP), ports {tcp80, tcp443, udp443: {free, by, ours}} (by — who holds the port, in words, null when free; our own nginx and profiles count as free and carry ours: true — «taken by us» for people), app_containers [{name, line, port}] (Amnezia app containers — adopted without a question), plan: pro | semi_pro (UDP 443 held by something else or both lines already sit on ports of their own — site on 443, profiles on their ports) | blocked (TCP 80/443 held by something else or the domain points elsewhere), reasons [code…]: dns_none, dns_elsewhere, dns_partial, dns_unknown, aaaa_foreign, cloudflare_proxied, tcp80_busy, tcp443_busy, tcp443_app, udp443_busy, no_line_for_443, awg2_container_busy; udp443_line — which line will be on UDP 443 (\"2.0\", \"3.1\"; null for semi_pro and blocked); keys_have — live keys of earlier runs (they count), keys_new — how many keys the scenario will actually create out of keys (1–20, 5 by default)"
+      }
+    },
+    "lazy-setup": {
+      "mcp": null,
+      "readonly": false,
+      "secret": true,
+      "destructive": true,
+      "params": {
+        "domain": {
+          "ref": "domain_input",
+          "required": true
+        },
+        "keys": {
+          "ref": "lazy_keys",
+          "required": false,
+          "default": 5
+        }
+      },
+      "description": {
+        "ru": "Ленивый Pro целиком, без вопросов: подхват контейнеров приложения Amnezia (их порты не трогаются), Let's Encrypt (отказ — запасной самоподписанный; сайт, который уже жил на домене с настоящим сертификатом, остаётся — тогда отказ), случайный шаблон сайта (до 3 попыток, потом встроенная заглушка), AmneziaWG 2.0 на UDP 443 и 3.1 на случайном порту (2.0 уже стоит на своём порту — на 443 встаёт 3.1; UDP 443 занят — Semi-Pro), панель на домене, ключи со случайными именами (у каждого обе линии) и страница подключения на каждый. На установленном сервере ничего не ломает: порты стоящих профилей не двигаются, ключи Ленивого Pro засчитываются — повтор не плодит лишних. Ответ: mode, domain, udp443 {profile, line} | null, profiles [{id, line, port}], site {template}, panel_on_domain, keys [{name, label, page}] (page — адрес-секрет или null), warnings [код…]: template_fallback, cert_fallback, adopted, keys_partial, panel_off и обойдённые причины lazy-check. Отказ проверки — до изменений: dns_not_here, port_busy, app_container_busy, awg2_container_busy с plan и reasons. Долгое: минуты",
+        "en": "The whole Lazy Pro without questions: adopting Amnezia app containers (their ports stay), Let's Encrypt (a refusal falls back to self-signed; a site that already lived on a domain with a real certificate stays — then it is a refusal), a random site template (up to 3 attempts, then the built-in stub), AmneziaWG 2.0 on UDP 443 and 3.1 on a random port (2.0 already on its own port — 3.1 goes to 443; UDP 443 busy — Semi-Pro), the panel on the domain, keys with random names (both lines each) and a connection page for each. On an installed server it breaks nothing: ports of installed profiles do not move, Lazy Pro keys already made count — a rerun does not add extra ones. Reply: mode, domain, udp443 {profile, line} | null, profiles [{id, line, port}], site {template}, panel_on_domain, keys [{name, label, page}] (page is a secret URL or null), warnings [code…]: template_fallback, cert_fallback, adopted, keys_partial, panel_off and the lazy-check reasons it went around. A failed check refuses before any change: dns_not_here, port_busy, app_container_busy, awg2_container_busy with plan and reasons. Long: minutes"
+      }
+    },
+    "pro-line": {
+      "mcp": null,
+      "readonly": false,
+      "destructive": true,
+      "params": {
+        "profile": {
+          "ref": "profile",
+          "required": true
+        },
+        "adopted_confirm": {
+          "ref": "adopted_confirm",
+          "required": false
+        }
+      },
+      "description": {
+        "ru": "Только в режиме pro (иначе mode_not_pro): выбранная линия встаёт на UDP 443 (не установлена — ставится сразу на 443), прежняя — на свободный случайный порт; ключи обоих профилей надо раздать заново. Профиль, подхваченный у приложения Amnezia с людьми без ключа на сервере, — только с adopted_confirm=<тот профиль> (ACC-2), иначе adopted_keyless с полем profile до любых изменений. Ответ: mode, udp443 {profile, line}, profiles [{id, line, port}]",
+        "en": "Only in pro mode (otherwise mode_not_pro): the chosen line goes on UDP 443 (not installed — installed right on 443), the former one moves to a free random port; keys of both profiles must be handed out again. A profile adopted from the Amnezia app whose people have no keys on the server moves only with adopted_confirm=<that profile> (ACC-2), otherwise adopted_keyless with the profile field before any change. Reply: mode, udp443 {profile, line}, profiles [{id, line, port}]"
+      }
+    },
+    "change-template": {
+      "mcp": "site_set_template",
+      "readonly": false,
+      "destructive": false,
+      "params": {
+        "template": {
+          "ref": "template",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Сменить шаблон сайта-маскировки (оба режима с сайтом; в lite — needs_site)",
+        "en": "Change the cover site template (both site modes; needs_site in lite)"
+      }
+    },
+    "domain-check": {
+      "mcp": "domain_check",
+      "readonly": true,
+      "destructive": false,
+      "params": {
+        "domain": {
+          "ref": "domain",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Проверить DNS НОВОГО домена до смены режима или домена: все A-записи против адресов сервера (state ok/partial/elsewhere/none/unknown, a, ours, foreign, unpublished, cloudflare) и AAAA против его IPv6 (aaaa, aaaa_foreign); ready — домен годится для Let's Encrypt прямо сейчас; hint — что не так словами. Ничего не меняет и не выпускает (site-check проверяет только уже записанный домен)",
+        "en": "Check the DNS of a NEW domain before changing the mode or domain: every A record against the server addresses (state ok/partial/elsewhere/none/unknown, a, ours, foreign, unpublished, cloudflare) and AAAA against its IPv6 (aaaa, aaaa_foreign); ready — the domain is fit for Let's Encrypt right now; hint — what is wrong, in words. Changes and issues nothing (site-check only checks the domain already saved)"
+      }
+    },
+    "site-check": {
+      "mcp": "site_check",
+      "readonly": true,
+      "destructive": false,
+      "params": {},
+      "description": {
+        "ru": "Проверить сайт и сертификат снаружи: все A-записи домена против адресов сервера (dns_state ok/partial/elsewhere/none/unknown, dns_foreign, dns_aaaa_foreign, dns_cloudflare), HTTPS, сертификат",
+        "en": "Check the site and certificate from outside: every A record of the domain against the server addresses (dns_state ok/partial/elsewhere/none/unknown, dns_foreign, dns_aaaa_foreign, dns_cloudflare), HTTPS, certificate"
+      }
+    },
+    "dns-set": {
+      "mcp": "client_dns_set",
+      "readonly": false,
+      "destructive": false,
+      "params": {
+        "dns1": {
+          "ref": "dns",
+          "required": true
+        },
+        "dns2": {
+          "ref": "dns",
+          "required": false
+        }
+      },
+      "description": {
+        "ru": "Задать серверы имён для клиентских конфигов. Действует на НОВЫЕ выдачи ключей: у выданных раньше конфигов DNS останется прежним, пока ключ не перевыпустят",
+        "en": "Set the name servers for client configs. Applies to NEWLY issued keys: configs handed out earlier keep their old DNS until the key is reissued"
+      }
+    },
+    "miniapp-status": {
+      "mcp": "panel_status",
+      "readonly": true,
+      "destructive": false,
+      "params": {},
+      "description": {
+        "ru": "Состояние панели на домене без секретного пути: enabled (работает), configured (путь записан), available (можно ли включить здесь вообще), reason (no_site | no_domain | untrusted_cert) и hint",
+        "en": "Panel-on-domain state without the secret path: enabled (really works), configured (path written down), available (can it be enabled here at all), reason (no_site | no_domain | untrusted_cert) and hint"
+      }
+    },
+    "miniapp-on": {
+      "mcp": "panel_domain_enable",
+      "readonly": false,
+      "secret": true,
+      "destructive": false,
+      "params": {},
+      "description": {
+        "ru": "Открыть панель на домене по секретному пути; нужен домен с доверенным сертификатом — работает в обоих режимах с сайтом, иначе not_pro; путь генерируется, вход кодом из бота",
+        "en": "Expose the panel on the domain under a secret path; needs a domain with a trusted certificate — works in both site modes, otherwise not_pro; path is generated, login by bot code"
+      }
+    },
+    "miniapp-off": {
+      "mcp": "panel_domain_disable",
+      "readonly": false,
+      "destructive": false,
+      "params": {},
+      "description": {
+        "ru": "Закрыть панель на домене (SSH-туннель остаётся)",
+        "en": "Close the panel on the domain (SSH tunnel remains)"
+      }
+    },
+    "miniapp-rotate": {
+      "mcp": "panel_domain_rotate",
+      "readonly": false,
+      "secret": true,
+      "destructive": false,
+      "params": {},
+      "description": {
+        "ru": "Сменить секретный путь панели на домене (те же условия, что у panel_domain_enable: нужен сайт на домене и доверенный сертификат; у выключенной панели — panel_disabled). Прежний адрес перестаёт работать сразу — предупреди человека",
+        "en": "Rotate the secret panel path on the domain (same conditions as panel_domain_enable: a site on a domain and a trusted certificate; a disabled panel answers panel_disabled). The old address stops working at once — warn the person"
+      }
+    },
+    "site-alt-svc": {
+      "mcp": "site_alt_svc",
+      "readonly": false,
+      "destructive": false,
+      "params": {
+        "state": {
+          "ref": "onoff",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Включить или выключить заголовок Alt-Svc (объявление HTTP/3 на UDP/443 для правдоподобия)",
+        "en": "Enable or disable the Alt-Svc header (advertise HTTP/3 on UDP/443 for plausibility)"
+      }
+    },
+    "preflight": {
+      "mcp": "preflight_modes",
+      "readonly": true,
+      "destructive": false,
+      "params": {},
+      "description": {
+        "ru": "Предполётная проверка портов 80/443 (TCP и UDP): кто занимает, какой юнит/контейнер/продукт, локальный файрвол; какие режимы доступны",
+        "en": "Pre-flight check of ports 80/443 (TCP and UDP): owner process, unit/container/product, local firewall; which modes are available"
+      }
+    },
+    "lang-set": {
+      "mcp": "lang_set",
+      "readonly": false,
+      "destructive": false,
+      "params": {
+        "lang": {
+          "ref": "lang",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Сменить язык интерфейсов (SSH-меню, панель, умолчание бота)",
+        "en": "Change interface language (SSH menu, panel, bot default)"
+      }
+    },
+    "agent-list": {
+      "mcp": null,
+      "readonly": true,
+      "destructive": false,
+      "params": {},
+      "description": {
+        "ru": "Список доступов агентов к MCP по HTTP: название, уровень, срок, последний вызов и адрес, число вызовов (без секретов)",
+        "en": "Agent HTTP access grants: label, scope, expiry, last call and IP, call count (no secrets)"
+      }
+    },
+    "agent-add": {
+      "mcp": null,
+      "readonly": false,
+      "destructive": false,
+      "params": {
+        "label": {
+          "ref": "label",
+          "required": true
+        },
+        "scope": {
+          "ref": "scope",
+          "required": false,
+          "default": "read"
+        },
+        "days": {
+          "ref": "days",
+          "required": false,
+          "default": 30
+        },
+        "allow_ips": {
+          "ref": "ip_list",
+          "required": false
+        },
+        "port": {
+          "ref": "port",
+          "required": false
+        },
+        "pin_ip": {
+          "ref": "onoff",
+          "required": false,
+          "default": "off"
+        },
+        "mode": {
+          "ref": "grant_mode",
+          "required": false,
+          "default": "static"
+        }
+      },
+      "description": {
+        "ru": "Выдать агенту доступ: секретный путь плюс токен для заголовка Authorization: Bearer; ответ содержит адрес, токен и готовую команду подключения (показывается один раз, потом через agent-show). Срок по умолчанию 30 дней, 0 — бессрочно; pin_ip=on привязывает доступ к адресу первого использования; mode=rolling выдаёт одноразовый ключ вместо постоянного токена — кража такого доступа обнаруживается, но клиент обязан хранить ключ сам (один доступ — один клиент)",
+        "en": "Grant an agent access: a secret path plus a token for the Authorization: Bearer header; the answer contains the URL, the token and the ready connect command. Default validity 30 days, 0 — unlimited; pin_ip=on pins the grant to the address of its first use; mode=rolling issues a one-shot key instead of a permanent token — theft of such a grant gets detected, but the client must keep the key itself (one grant, one client)"
+      }
+    },
+    "agent-show": {
+      "mcp": null,
+      "readonly": true,
+      "secret": true,
+      "destructive": false,
+      "params": {
+        "id": {
+          "ref": "agent_id",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Показать адрес, токен и команду подключения доступа (содержит секреты)",
+        "en": "Show the grant URL, token and connect command (contains secrets)"
+      }
+    },
+    "agent-rotate": {
+      "mcp": null,
+      "readonly": false,
+      "destructive": true,
+      "params": {
+        "id": {
+          "ref": "agent_id",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Перевыпустить секрет и токен доступа: старый адрес и старый токен перестают работать. У доступа с одноразовым ключом (mode=rolling) заодно начинается новая цепочка и снимается заморозка — это и есть ответ «это был я» на обнаруженного клона",
+        "en": "Rotate the grant secret and token: the old URL and token stop working. For a grant with a one-shot key (mode=rolling) it also starts a new chain and lifts the freeze — the answer \"it was me\" to a detected clone"
+      }
+    },
+    "agent-harden": {
+      "mcp": null,
+      "readonly": false,
+      "secret": true,
+      "destructive": false,
+      "params": {
+        "id": {
+          "ref": "agent_id",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Выдать токен доступу, выданному до второго фактора: одного адреса станет мало, агенту нужен заголовок Authorization: Bearer",
+        "en": "Issue a token to a grant created before the second factor: the URL alone stops being enough, the agent needs the Authorization: Bearer header"
+      }
+    },
+    "agent-pin": {
+      "mcp": null,
+      "readonly": false,
+      "destructive": false,
+      "params": {
+        "id": {
+          "ref": "agent_id",
+          "required": true
+        },
+        "state": {
+          "ref": "onoff",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Привязка доступа к адресу: on — запомнить адрес при следующем вызове и принимать только его, off — снять привязку",
+        "en": "Address pinning for a grant: on — remember the address at the next call and accept only it, off — remove the pinning"
+      }
+    },
+    "agent-extend": {
+      "mcp": null,
+      "readonly": false,
+      "destructive": false,
+      "description": {
+        "ru": "Продлить срок доступа агента: адрес и токен не меняются, отсчёт от текущей даты окончания; 0 — снять срок",
+        "en": "Extend an agent grant: the address and token stay the same, counted from the current expiry; 0 removes the expiry"
+      },
+      "params": {
+        "id": {
+          "ref": "agent_id",
+          "required": true
+        },
+        "days": {
+          "ref": "days",
+          "required": true
+        }
+      }
+    },
+    "agent-enable": {
+      "mcp": null,
+      "readonly": false,
+      "destructive": false,
+      "params": {
+        "id": {
+          "ref": "agent_id",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Включить доступ",
+        "en": "Enable a grant"
+      }
+    },
+    "agent-disable": {
+      "mcp": null,
+      "readonly": false,
+      "destructive": false,
+      "params": {
+        "id": {
+          "ref": "agent_id",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Выключить доступ (мгновенно, запись сохраняется)",
+        "en": "Disable a grant (immediately, record kept)"
+      }
+    },
+    "agent-del": {
+      "mcp": null,
+      "readonly": false,
+      "destructive": true,
+      "params": {
+        "id": {
+          "ref": "agent_id",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Удалить доступ",
+        "en": "Delete a grant"
+      }
+    },
+    "mcp-http-status": {
+      "mcp": null,
+      "readonly": true,
+      "destructive": false,
+      "params": {},
+      "description": {
+        "ru": "Состояние HTTP-транспорта MCP: enabled (работает), configured (включён в конфиге), available (есть ли где слушать), reason (no_site), hint, а также listen, порт, адрес (домен или IP), отпечаток сертификата, unit_state и reachable",
+        "en": "MCP HTTP transport state: enabled (really works), configured (switched on in the config), available (is there anywhere to listen), reason (no_site), hint, plus listen, port, base URL (domain or IP), certificate fingerprint, unit_state and reachable"
+      }
+    },
+    "mcp-http-on": {
+      "mcp": null,
+      "readonly": false,
+      "destructive": false,
+      "params": {
+        "port": {
+          "ref": "port",
+          "required": false
+        }
+      },
+      "description": {
+        "ru": "Включить HTTP-транспорт MCP: оба режима с сайтом — через nginx, и адрес зависит не от названия режима, а от того, чем сайт отдаётся сейчас (домен с Let's Encrypt или запасной самоподписанный на IP, тогда в ответе отпечаток); lite — только с --port (отдельный TLS-порт), иначе код needs_site",
+        "en": "Enable MCP HTTP transport: both site modes go through nginx, and the URL depends not on the mode name but on how the site is served right now (domain with Let's Encrypt, or the self-signed fallback on the IP — then the reply carries the fingerprint); lite — only with --port (dedicated TLS port), otherwise code needs_site"
+      }
+    },
+    "mcp-http-off": {
+      "mcp": null,
+      "readonly": false,
+      "destructive": false,
+      "params": {},
+      "description": {
+        "ru": "Выключить HTTP-транспорт MCP; доступы остаются, SSH-транспорт работает",
+        "en": "Disable MCP HTTP transport; grants are kept, SSH transport keeps working"
+      }
+    },
+    "share-create": {
+      "mcp": null,
+      "readonly": false,
+      "secret": true,
+      "destructive": false,
+      "params": {
+        "name": {
+          "ref": "name",
+          "required": true
+        },
+        "profile": {
+          "ref": "profile",
+          "required": true
+        },
+        "format": {
+          "ref": "format",
+          "required": false,
+          "default": "conf"
+        },
+        "endpoint": {
+          "ref": "key_endpoint",
+          "required": false
+        }
+      },
+      "description": {
+        "ru": "Создать временную ссылку на скачивание файла пользователя: одноразовый HTTPS-слушатель на случайном порту, секретный путь, срок по умолчанию 5 минут; ответ содержит адрес с секретом",
+        "en": "Create a temporary download link for the user file: a one-shot HTTPS listener on a random port, a secret path, 5 minutes by default; the answer contains the URL with the secret"
+      }
+    },
+    "share-list": {
+      "mcp": null,
+      "readonly": true,
+      "destructive": false,
+      "params": {},
+      "description": {
+        "ru": "Активные раздачи: id, пользователь, профиль, формат, порт, сколько осталось жить, сколько раз скачали (без секретной части адреса)",
+        "en": "Active shares: id, user, profile, format, port, time left, download count (without the secret part of the address)"
+      }
+    },
+    "share-revoke": {
+      "mcp": null,
+      "readonly": false,
+      "destructive": true,
+      "params": {
+        "id": {
+          "ref": "share_id",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Снять раздачу немедленно: слушатель гасится, файл затирается, порт закрывается",
+        "en": "Revoke a share immediately: the listener stops, the file is wiped, the port is closed"
+      }
+    },
+    "share-revoke-all": {
+      "mcp": null,
+      "readonly": false,
+      "destructive": true,
+      "params": {},
+      "description": {
+        "ru": "Снять все активные раздачи",
+        "en": "Revoke every active share"
+      }
+    },
+    "share-tick": {
+      "mcp": null,
+      "readonly": false,
+      "destructive": false,
+      "params": {},
+      "description": {
+        "ru": "Уборка просроченных раздач (для таймера); ту же уборку делает любой другой вызов модуля",
+        "en": "Sweep expired shares (for the timer); every other call of the module sweeps them too"
+      }
+    },
+    "clients-list": {
+      "mcp": "clients_list",
+      "readonly": true,
+      "destructive": false,
+      "params": {
+        "platform": {
+          "ref": "platform",
+          "required": false
+        },
+        "line": {
+          "ref": "line",
+          "required": false
+        }
+      },
+      "description": {
+        "ru": "Каталог приложений для подключения (docs/CLIENTS.md): по каждому — разработчик, официальное ли, лицензия, ссылки по платформам (App Store, Google Play, GitHub, сайт), поддержка линеек (yes | no | unknown | версия, с которой поддерживается), какой формат ключа принимает (conf, qr-conf, vpn, qr-vpn, deeplink) и можно ли зеркалить сборку на наш сервер; фильтры platform и line. Ничего не меняет, секретов нет",
+        "en": "Catalog of client apps (docs/CLIENTS.md): for each — developer, official or not, license, links per platform (App Store, Google Play, GitHub, site), line support (yes | no | unknown | the version it starts from), accepted key formats (conf, qr-conf, vpn, qr-vpn, deeplink) and whether its build can be mirrored on our server; platform and line filters. Changes nothing, no secrets"
+      }
+    },
+    "page-create": {
+      "mcp": "page_create",
+      "readonly": false,
+      "secret": true,
+      "destructive": false,
+      "params": {
+        "name": {
+          "ref": "name",
+          "required": true
+        },
+        "ttl": {
+          "ref": "ttl",
+          "required": true
+        },
+        "profiles": {
+          "ref": "page_profiles",
+          "required": false
+        },
+        "mirror": {
+          "ref": "onoff",
+          "required": false,
+          "default": "on"
+        }
+      },
+      "description": {
+        "ru": "Создать страницу подключения для пользователя: https://<домен>/p-<секрет>/ с его ключами (файл .conf, QR, vpn://, ссылка в приложение), приложениями под устройство и запросом копии сборки на наш сервер (mirror=on). Нужен домен с доверенным сертификатом, иначе pages_need_domain. ВНИМАНИЕ: ответ содержит АДРЕС-СЕКРЕТ (url): кто знает ссылку — получает приватные ключи пользователя. Отдай его только человеку, который попросил; бессрочная страница (ttl=forever) живёт до отзыва page_revoke",
+        "en": "Create a connection page for a user: https://<domain>/p-<secret>/ with the user's keys (.conf file, QR, vpn://, open-in-app link), apps for the device and a request to copy a build to our server (mirror=on). Needs a domain with a trusted certificate, otherwise pages_need_domain. WARNING: the answer contains the SECRET URL (url): whoever knows the link gets the user's private keys. Hand it only to the human who asked; a permanent page (ttl=forever) lives until page_revoke"
+      }
+    },
+    "page-list": {
+      "mcp": "page_list",
+      "readonly": true,
+      "destructive": false,
+      "params": {
+        "name": {
+          "ref": "name",
+          "required": false
+        }
+      },
+      "description": {
+        "ru": "Страницы подключения (все или одного пользователя): id, пользователь, создана, срок, профили, зеркало, число открытий и последнее открытие — БЕЗ адресов; адрес выдаёт только page_url",
+        "en": "Connection pages (all or of one user): id, user, created, expiry, profiles, mirror, number of visits and last visit — WITHOUT addresses; only page_url hands the address out"
+      }
+    },
+    "page-url": {
+      "mcp": "page_url",
+      "readonly": false,
+      "secret": true,
+      "destructive": false,
+      "params": {
+        "id": {
+          "ref": "page_id",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Выдать адрес существующей страницы ещё раз, чтобы отправить человеку повторно. ВНИМАНИЕ: ответ содержит АДРЕС-СЕКРЕТ (url) с доступом к приватным ключам пользователя — только тому, кто попросил; выдача пишется в аудит",
+        "en": "Hand out the address of an existing page again, to resend it to the human. WARNING: the answer contains the SECRET URL (url) that gives access to the user's private keys — only to the one who asked; the issue is audited"
+      }
+    },
+    "page-revoke": {
+      "mcp": "page_revoke",
+      "readonly": false,
+      "destructive": false,
+      "params": {
+        "id": {
+          "ref": "page_id",
+          "required": true
+        },
+        "sub": {
+          "ref": "onoff",
+          "required": false,
+          "default": "off",
+          "mcp": false
+        },
+        "keys": {
+          "ref": "onoff",
+          "required": false,
+          "default": "off",
+          "mcp": false
+        }
+      },
+      "description": {
+        "ru": "Отозвать страницу: адрес перестаёт открываться сразу; последняя страница снимает маршрут и останавливает службу",
+        "en": "Revoke a page: the address stops opening at once; the last page removes the route and stops the service"
+      }
+    },
+    "page-revoke-all": {
+      "mcp": "page_revoke_all",
+      "readonly": false,
+      "destructive": true,
+      "params": {
+        "name": {
+          "ref": "name",
+          "required": false
+        }
+      },
+      "description": {
+        "ru": "Отозвать все страницы подключения (все или одного пользователя): каждый выданный адрес перестаёт открываться сразу; ответ — сколько отозвано",
+        "en": "Revoke every connection page (all or of one user): every issued address stops opening at once; the answer says how many were revoked"
+      }
+    },
+    "sub-list": {
+      "mcp": "sub_list",
+      "readonly": true,
+      "destructive": false,
+      "params": {
+        "name": {
+          "ref": "name",
+          "required": false
+        }
+      },
+      "description": {
+        "ru": "Подписки — постоянные ссылки людей для Clash/mihomo (all.yaml), incy (all.txt), роутеров и приложений (.conf и vpn:// по линиям 1.0–3.1): у кого есть, когда создана и перевыпущена, сколько раз и когда её забирали и каким клиентом, какие линии и профили за ней стоят; domain_ready — живут ли адреса сейчас (без домена с доверенным сертификатом подписки на паузе). БЕЗ адресов: адрес подписки — постоянный ключ ко всем ключам человека, агентам его не выдают; создать, показать, перевыпустить и отозвать подписку может только человек — в SSH-меню, боте или панели",
+        "en": "Subscriptions — permanent per-person links for Clash/mihomo (all.yaml), incy (all.txt), routers and apps (.conf and vpn:// per line 1.0–3.1): who has one, when it was created and rotated, how many times and when it was fetched and by which client, which lines and profiles are behind it; domain_ready — whether the addresses work right now (without a domain with a trusted certificate subscriptions are paused). WITHOUT addresses: a subscription address is a permanent key to all of the person's keys and is never handed to agents; only a human creates, shows, rotates and revokes subscriptions — in the SSH menu, the bot or the panel"
+      }
+    },
+    "sub-create": {
+      "mcp": null,
+      "readonly": false,
+      "secret": true,
+      "destructive": false,
+      "params": {
+        "name": {
+          "ref": "name",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Создать подписку человека: постоянный адрес https://<домен>/s-<секрет>/ с суффиксами all.yaml (профиль mihomo со всеми линиями), all.txt (ссылки amneziawg:// всех линий — подписка incy), awgNN.conf и awgNN.vpn по линиям, all.vpn. Уже есть — тот же адрес (new: false). Нужен домен с доверенным сертификатом, иначе subs_need_domain. Ответ содержит АДРЕС-СЕКРЕТ: агентам MCP не публикуется",
+        "en": "Create a person's subscription: a permanent address https://<domain>/s-<secret>/ with suffixes all.yaml (a mihomo profile with every line), all.txt (amneziawg:// links of every line — an incy subscription), awgNN.conf and awgNN.vpn per line, all.vpn. Already there — the same address (new: false). Needs a domain with a trusted certificate, otherwise subs_need_domain. The answer contains the SECRET ADDRESS: not published to MCP agents"
+      }
+    },
+    "sub-show": {
+      "mcp": null,
+      "readonly": true,
+      "secret": true,
+      "destructive": false,
+      "params": {
+        "name": {
+          "ref": "name",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Адреса существующей подписки ещё раз — для нового устройства или роутера; выдача пишется в аудит (без адреса). Ответ содержит АДРЕС-СЕКРЕТ: агентам MCP не публикуется",
+        "en": "The addresses of an existing subscription again — for a new device or router; each issue is audited (without the address). The answer contains the SECRET ADDRESS: not published to MCP agents"
+      }
+    },
+    "sub-rotate": {
+      "mcp": null,
+      "readonly": false,
+      "secret": true,
+      "destructive": true,
+      "params": {
+        "name": {
+          "ref": "name",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Перевыпустить подписку: новый секрет, прежний адрес сразу отвечает 404 — роутеры и приложения надо перенастроить новым. Ключи VPN не меняются. Ответ содержит АДРЕС-СЕКРЕТ: агентам MCP не публикуется",
+        "en": "Rotate a subscription: a new secret, the old address answers 404 at once — routers and apps have to be set up with the new one. VPN keys stay the same. The answer contains the SECRET ADDRESS: not published to MCP agents"
+      }
+    },
+    "sub-revoke": {
+      "mcp": null,
+      "readonly": false,
+      "destructive": true,
+      "params": {
+        "name": {
+          "ref": "name",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Отозвать подписку: адрес сразу отвечает 404, секрет стёрт; ключи VPN не меняются. Удаление человека отзывает его подписку само",
+        "en": "Revoke a subscription: the address answers 404 at once and the secret is wiped; VPN keys stay the same. Deleting the person revokes their subscription by itself"
+      }
+    },
+    "short-ensure": {
+      "mcp": null,
+      "readonly": false,
+      "secret": true,
+      "destructive": false,
+      "params": {
+        "name": {
+          "ref": "name",
+          "required": true
+        },
+        "suffix": {
+          "ref": "short_suffix",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Короткая ссылка подписки https://<домен>/<КОД> (8 знаков, работает только с 2FA через Telegram-бота): код пары «подписка + суффикс», нет — создаётся. Ответ {code, display, url, created, suffix, new}. Бот не настроен — short_need_bot. Ответ содержит КОД: агентам MCP не публикуется",
+        "en": "A subscription short link https://<domain>/<CODE> (8 chars, works only with 2FA via the Telegram bot): the code of the “subscription + suffix” pair, created if missing. Answer {code, display, url, created, suffix, new}. Bot not set up — short_need_bot. The answer contains the CODE: not published to MCP agents"
+      }
+    },
+    "short-list": {
+      "mcp": null,
+      "readonly": true,
+      "secret": true,
+      "destructive": false,
+      "params": {
+        "name": {
+          "ref": "name",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Короткие ссылки подписки, которые уже созданы: {codes: [{suffix, code, display, url, created}], short_available}. Ответ содержит КОДЫ: агентам MCP не публикуется",
+        "en": "The subscription short links already created: {codes: [{suffix, code, display, url, created}], short_available}. The answer contains CODES: not published to MCP agents"
+      }
+    },
+    "short-replace-request": {
+      "mcp": null,
+      "readonly": false,
+      "secret": true,
+      "destructive": false,
+      "params": {
+        "name": {
+          "ref": "name",
+          "required": true
+        },
+        "suffix": {
+          "ref": "short_suffix",
+          "required": true
+        },
+        "who": {
+          "ref": "short_who",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Запрос замены короткой ссылки через бота: {request, number, expires, left} — число показывает тот, кто попросил, администратор нажимает его в боте среди 10 (событие short_confirm). Один ожидающий запрос на код, не больше 5 в час (short_pending, short_limit). Ответ содержит ЧИСЛО: агентам MCP не публикуется",
+        "en": "A request to replace the short link via the bot: {request, number, expires, left} — whoever asked shows the number, the administrator presses it in the bot among 10 (short_confirm event). One pending request per code, at most 5 per hour (short_pending, short_limit). The answer contains the NUMBER: not published to MCP agents"
+      }
+    },
+    "short-decide": {
+      "mcp": null,
+      "readonly": false,
+      "secret": true,
+      "destructive": false,
+      "params": {
+        "request": {
+          "ref": "short_request",
+          "required": true
+        },
+        "answer": {
+          "ref": "short_answer",
+          "required": true
+        },
+        "who": {
+          "ref": "short_who",
+          "required": false
+        }
+      },
+      "description": {
+        "ru": "Решение администратора по запросу входа или замены: число, deny («Это не я» — бан адреса) или swap (новый код взамен). Решает первый; итог — поле decision: ok|wrong|denied|swapped|expired|frozen (status корня — конверт моста), новый код — в display и url, повторное нажатие — already и by первого; событие short_decided. Без общего замка моста — свой замок состояния. Ответ содержит КОД: агентам MCP не публикуется",
+        "en": "The administrator's decision on a sign-in or replacement request: a number, deny (“Not me” — the address is banned) or swap (a new code instead). The first one decides; the outcome is the decision field: ok|wrong|denied|swapped|expired|frozen (the root status is the bridge envelope), the new code is in display and url, a repeated press gets already and by of the first one; short_decided event. Takes no bridge-wide lock — the state has its own. The answer contains the CODE: not published to MCP agents"
+      }
+    },
+    "short-status": {
+      "mcp": null,
+      "readonly": true,
+      "secret": true,
+      "destructive": false,
+      "params": {
+        "request": {
+          "ref": "short_request",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Состояние запроса подтверждения — для опроса панелью и SSH: {decision: pending|ok|wrong|denied|swapped|expired|frozen, kind, suffix, expires, left, display?, url?} (новый код — после подтверждённой замены). Ответ содержит КОД: агентам MCP не публикуется",
+        "en": "The confirmation request state — for polling by the panel and SSH: {decision: pending|ok|wrong|denied|swapped|expired|frozen, kind, suffix, expires, left, display?, url?} (the new code after a confirmed replacement). The answer contains the CODE: not published to MCP agents"
+      }
+    },
+    "short-pending": {
+      "mcp": null,
+      "readonly": true,
+      "secret": true,
+      "destructive": false,
+      "params": {},
+      "description": {
+        "ru": "Ждут подтверждения — запасной путь панели, если Telegram недоступен: {requests: [{request, kind: login|replace, name, label, suffix, device, ip, geo, options: [10 чисел], who, created, expires, left}]} без верного числа",
+        "en": "Waiting for confirmation — the panel's fallback when Telegram is unavailable: {requests: [{request, kind: login|replace, name, label, suffix, device, ip, geo, options: [10 numbers], who, created, expires, left}]} without the right number"
+      }
+    },
+    "short-bans": {
+      "mcp": null,
+      "readonly": true,
+      "secret": true,
+      "destructive": false,
+      "params": {},
+      "description": {
+        "ru": "Действующие баны адресов за подбор кодов и «Это не я» и заморозки кодов за неверные числа: {bans: [{kind: ip|code, target, level, until, reason: misses|denied|wrong}]} (у кода — name, label, suffix)",
+        "en": "Active bans of addresses for code guessing and “Not me” and freezes of codes for wrong numbers: {bans: [{kind: ip|code, target, level, until, reason: misses|denied|wrong}]} (codes also carry name, label, suffix)"
+      }
+    },
+    "short-unban": {
+      "mcp": null,
+      "readonly": false,
+      "secret": true,
+      "destructive": false,
+      "params": {
+        "target": {
+          "ref": "short_target",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Снять бан адреса или заморозку кода — лестница начинается заново: {unbanned: true|false, kind: ip|code}",
+        "en": "Lift an address ban or a code freeze — the ladder starts over: {unbanned: true|false, kind: ip|code}"
+      }
+    },
+    "mirror-list": {
+      "mcp": "mirror_list",
+      "readonly": true,
+      "destructive": false,
+      "params": {},
+      "description": {
+        "ru": "Зеркало сборок приложений на нашем сервере: по каждой паре приложение/платформа — состояние (queued | downloading | ready | failed), версия, файл, размер, sha256, когда скачано, ошибка; пределы max_file_mb / max_total_mb и занято used_mb",
+        "en": "App build mirror on our server: per app/platform pair — state (queued | downloading | ready | failed), version, file, size, sha256, fetched time, error; limits max_file_mb / max_total_mb and used_mb"
+      }
+    },
+    "mirror-fetch": {
+      "mcp": "mirror_fetch",
+      "readonly": false,
+      "destructive": false,
+      "params": {
+        "app": {
+          "ref": "app",
+          "required": true
+        },
+        "platform": {
+          "ref": "platform",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Скачать официальную сборку приложения на наш сервер: последний релиз GitHub, файл по образцу из каталога, проверка размера и sha256 из API (без контрольной суммы — mirror_unverified), пределы места; загрузка идёт в фоне, ответ — state (queued), итог смотреть mirror_list. Только открытые приложения с полем mirror (unknown_app, not_mirrorable)",
+        "en": "Download the official app build to our server: latest GitHub release, file by the catalog pattern, size and sha256 checked against the API (no checksum — mirror_unverified), space limits; the download runs in the background, the answer is state (queued), see mirror_list for the outcome. Open-source apps with a mirror field only (unknown_app, not_mirrorable)"
+      }
+    },
+    "mirror-remove": {
+      "mcp": "mirror_remove",
+      "readonly": false,
+      "destructive": true,
+      "params": {
+        "app": {
+          "ref": "app",
+          "required": true
+        },
+        "platform": {
+          "ref": "platform",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Удалить сборку с зеркала: файл, meta.json, LICENSE и SOURCE.txt пары приложение/платформа; страницы перестают предлагать «скачать с нашего сервера» до новой загрузки",
+        "en": "Remove a build from the mirror: the file, meta.json, LICENSE and SOURCE.txt of the app/platform pair; pages stop offering “download from our server” until a new download"
+      }
+    },
+    "profile-repair": {
+      "mcp": "profile_repair",
+      "readonly": false,
+      "destructive": false,
+      "params": {
+        "profile": {
+          "ref": "profile",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Поднять контейнер профиля заново из копии состояния (state/): ключи прежние, архив не нужен. Это ответ на «контейнер пропал», а не восстановление из бэкапа",
+        "en": "Bring the profile container back from the saved state (state/): same keys, no archive needed. This is the answer to «the container is gone», not a backup restore"
+      }
+    },
+    "backup-schedule": {
+      "mcp": "backup_schedule",
+      "readonly": false,
+      "destructive": false,
+      "params": {
+        "frequency": {
+          "ref": "frequency",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Расписание ночной копии: off | daily | weekly | monthly",
+        "en": "Nightly backup schedule: off | daily | weekly | monthly"
+      }
+    },
+    "backup-last": {
+      "mcp": "backup_last",
+      "readonly": true,
+      "destructive": false,
+      "params": {},
+      "description": {
+        "ru": "Когда была последняя копия: имя, дата, размер, сколько всего архивов и чем кончился последний ночной проход",
+        "en": "When the last backup was taken: name, date, size, how many archives there are and how the last nightly run ended"
+      }
+    },
+    "backup-tick": {
+      "mcp": null,
+      "readonly": false,
+      "destructive": false,
+      "params": {},
+      "description": {
+        "ru": "Тик ночной копии (goamnezia-backup.timer): копия, ротация и событие боту при отказе. На забитом диске ротация идёт первой — иначе копия не снимется уже никогда",
+        "en": "Nightly backup tick (goamnezia-backup.timer): the copy, rotation and a bot event on failure. When the disk is full rotation runs first, otherwise a backup would never be taken again"
+      }
+    },
+    "cert-tick": {
+      "mcp": null,
+      "readonly": false,
+      "destructive": false,
+      "params": {},
+      "description": {
+        "ru": "Тик срока сертификата сайта (goamnezia-cert.timer, раз в сутки): пробует продлить, а если не вышло — событие боту за три недели до конца",
+        "en": "Site certificate expiry tick (goamnezia-cert.timer, daily): tries to renew and, if that fails, sends a bot event three weeks before expiry"
+      }
+    },
+    "kmod-status": {
+      "mcp": "kmod_status",
+      "readonly": true,
+      "destructive": false,
+      "params": {},
+      "description": {
+        "ru": "Модуль ядра AmneziaWG (docs/KMOD_PLAN.md, этап Б), только чтение: kmod — loaded, version, patched, warn (как status.kmod этапа А), state (off — модуля нет, профили на программе по умолчанию | ready — модуль собран и загружен, профили на программе | on — профили на модуле | fallback — выбран модуль, а профили работают программой: нет модуля под это ядро после обновления ядра, не загружен, без набора | failed — последняя установка на этом ядре не удалась | unpatched — в памяти чужой модуль без набора исправлений | busy — идёт установка или перевод), code, reason (словами, с ядром), kernel, want (kernel | program | пусто — человек не выбирал), installed (модуль под нынешнее ядро на диске), installed_version, owner (goamnezia | kaskad | other | пусто), label (метка набора этой версии), profiles {awg2: {engine — фактический kernel | program | unknown | stopped, want — выбранный}}, progress ({action, step, text, at, started} — ход долгого действия, пока оно идёт; иначе null), selftest ({ok, kernel, label, at, reason} | null), failed ({kernel, step, code, reason, log, at} | null), packages (что поставила goAmnezia — назвать при удалении). Ничего не меняет",
+        "en": "AmneziaWG kernel module (docs/KMOD_PLAN.md, stage B), read only: kmod — loaded, version, patched, warn (as status.kmod of stage A), state (off — no module, profiles run the program by default | ready — the module is built and loaded, profiles run the program | on — profiles run on the module | fallback — the module is chosen but profiles run the program: no module for this kernel after a kernel update, not loaded, without the fix set | failed — the last installation on this kernel failed | unpatched — a foreign module without the fix set is loaded | busy — an installation or switch is running), code, reason (in words, with the kernel), kernel, want (kernel | program | empty — the person has not chosen), installed (a module for the running kernel is on disk), installed_version, owner (goamnezia | kaskad | other | empty), label (this version's fix set mark), profiles {awg2: {engine — actual kernel | program | unknown | stopped, want — chosen}}, progress ({action, step, text, at, started} — progress of a long action while it runs; otherwise null), selftest ({ok, kernel, label, at, reason} | null), failed ({kernel, step, code, reason, log, at} | null), packages (installed by goAmnezia — named on removal). Changes nothing"
+      }
+    },
+    "kmod-check": {
+      "mcp": null,
+      "readonly": true,
+      "destructive": false,
+      "params": {},
+      "description": {
+        "ru": "Проверка хоста перед модулем ядра, только чтение: check — ok, code (not_apt | arch | container | no_proc_modules | secure_boot | kernel_old | disk | no_headers), reason (одной фразой с причиной и что сделать), arch, virt, secure_boot, disk_free_mb, kernel, headers {installed, candidate}, module {loaded, version, installed, ko_version, owner}, kaskad, reuse (модуль с меткой под это ядро уже стоит — сборки не будет), plan (что поставит apt: missing[], install[], size_mb, gcc, headers_meta {name, installed, kernel — тянет ли новое ядро, size_mb}) | null. apt-get -s — без изменений",
+        "en": "Host check before the kernel module, read only: check — ok, code (not_apt | arch | container | no_proc_modules | secure_boot | kernel_old | disk | no_headers), reason (one sentence with the reason and what to do), arch, virt, secure_boot, disk_free_mb, kernel, headers {installed, candidate}, module {loaded, version, installed, ko_version, owner}, kaskad, reuse (a module with the mark for this kernel is already installed — no build), plan (what apt installs: missing[], install[], size_mb, gcc, headers_meta {name, installed, kernel — whether it pulls in a new kernel, size_mb}) | null. apt-get -s — no changes"
+      }
+    },
+    "kmod-install": {
+      "mcp": null,
+      "readonly": false,
+      "destructive": false,
+      "params": {
+        "rebuild": {
+          "ref": "onoff",
+          "required": false,
+          "default": "off"
+        },
+        "headers_meta": {
+          "ref": "onoff",
+          "required": false,
+          "default": "off"
+        }
+      },
+      "description": {
+        "ru": "Поставить модуль ядра AmneziaWG — только по согласию человека (бот и панель — карточкой с кнопкой). Проверка хоста; профили закрепляются за программой (файл engine, без перезапуска); пакеты dkms gcc make patch gcc-NN linux-headers-<ядро> с ожиданием apt (до 10 мин), что поставлено — в packages; архив тега v3.1.20260906 с проверкой sha256; патч #218 — по заголовкам ядра, набор kaskad-k31.1 (--dry-run, потом наложение); dkms add/build/install, modprobe, проверка метки; /etc/modules-load.d/amneziawg.conf; хуки нового ядра zz-goamnezia-amneziawg; самопроверка в одноразовом контейнере (модуль ↔ модуль, модуль ← программа на линиях установленных профилей). Модуль с меткой под это ядро уже стоит (сосед Kaskad) — не пересобирается. Движок профилей НЕ меняет (это kmod-engine). headers_meta=on — ставить метапакет заголовков, даже если он тянет новое ядро (KMOD-05; без этого он ставится, только если ядро не обновляет). rebuild=on — пересобрать: профили на модуле на время уходят на программу и возвращаются (два обрыва по 15–25 с). Ход — в журнале действий и kmod-status.progress. Долгое: 1–15 минут. Ответ: state, version, kernel, owner, reused, p218, packages, headers_meta_skipped, selftest, want, duration_s; отказы: kmod_unsupported (причина проверки хоста), kmod_busy, apt_locked, apt_install_failed, kmod_download_failed, kmod_sha_mismatch, kmod_foreign_src, kmod_foreign, kmod_patch_sha, kmod_patch_failed, kmod_build_failed (хвост make.log — в kmod-status.failed.log), kmod_label, kmod_in_use, kmod_load_failed, kmod_selftest_failed",
+        "en": "Install the AmneziaWG kernel module — only with the person's consent (bot and panel — a card with a button). Host check; profiles are pinned to the program (the engine file, no restart); packages dkms gcc make patch gcc-NN linux-headers-<kernel> waiting for apt (up to 10 min), what was installed — in packages; the v3.1.20260906 tag archive checked by sha256; patch #218 — by the kernel headers, the kaskad-k31.1 set (--dry-run, then apply); dkms add/build/install, modprobe, mark check; /etc/modules-load.d/amneziawg.conf; new-kernel hooks zz-goamnezia-amneziawg; a self-test in a throwaway container (module ↔ module, module ← program on the lines of the installed profiles). A module with the mark for this kernel already installed (the Kaskad neighbour) is not rebuilt. Does NOT change the profiles engine (that is kmod-engine). headers_meta=on — install the headers metapackage even if it pulls in a new kernel (KMOD-05; otherwise it is installed only when it does not update the kernel). rebuild=on — rebuild: profiles on the module move to the program for a while and come back (two 15–25 s drops). Progress — in the action log and kmod-status.progress. Long: 1–15 minutes. Reply: state, version, kernel, owner, reused, p218, packages, headers_meta_skipped, selftest, want, duration_s; refusals: kmod_unsupported (the host check reason), kmod_busy, apt_locked, apt_install_failed, kmod_download_failed, kmod_sha_mismatch, kmod_foreign_src, kmod_foreign, kmod_patch_sha, kmod_patch_failed, kmod_build_failed (make.log tail — in kmod-status.failed.log), kmod_label, kmod_in_use, kmod_load_failed, kmod_selftest_failed"
+      }
+    },
+    "kmod-engine": {
+      "mcp": null,
+      "readonly": false,
+      "destructive": true,
+      "params": {
+        "engine": {
+          "ref": "kmod_engine",
+          "required": true
+        }
+      },
+      "description": {
+        "ru": "Перевести профили на модуль ядра (engine=kernel) или вернуть программу amneziawg-go (engine=program) — только по выбору человека. По одному (awg2, awg1, awg3): копия state/ (три последние), файл engine и блок в start.sh, перезапуск, проверка типа интерфейса (amneziawg | tun); до 3 минут ждём, что вернётся хоть один из тех, кто был на связи до смены (рукопожатие моложе 3 минут); людей не было — хватает подъёма. Не вернулся никто или движок не тот — откат всего сервера на прежний движок. Ключи людей не меняются, клиенты переподключаются сами за 15–25 с. kernel — только если модуль готов (kmod-status.state ready или on; самопроверка этого ядра делается, если её не было). Долгое: до 10 минут. Ответ: engine, want, profiles [{profile, from, to, restarted, alive_before, returned, return_s, note — already | not_running:<state> | no_clients | lost}], rolled_back, copies; отказ — kmod_not_ready, kmod_clients_lost, kmod_engine_mismatch, restart_failed, kmod_start_sh_unknown, kmod_busy — в корне те же поля и rolled_back=true",
+        "en": "Move the profiles to the kernel module (engine=kernel) or back to the amneziawg-go program (engine=program) — only by the person's choice. One by one (awg2, awg1, awg3): a state/ copy (the last three), the engine file and the start.sh block, a restart, an interface type check (amneziawg | tun); up to 3 minutes waiting for at least one of those connected before the switch (handshake younger than 3 minutes) to come back; nobody was connected — the interface being up is enough. Nobody came back or the engine is wrong — the whole server is rolled back to the previous engine. People's keys do not change, clients reconnect by themselves in 15–25 s. kernel — only when the module is ready (kmod-status.state ready or on; the self-test of this kernel is run if it was not). Long: up to 10 minutes. Reply: engine, want, profiles [{profile, from, to, restarted, alive_before, returned, return_s, note — already | not_running:<state> | no_clients | lost}], rolled_back, copies; refusal — kmod_not_ready, kmod_clients_lost, kmod_engine_mismatch, restart_failed, kmod_start_sh_unknown, kmod_busy — the same fields at the root and rolled_back=true"
+      }
+    },
+    "kmod-remove": {
+      "mcp": null,
+      "readonly": false,
+      "destructive": true,
+      "params": {},
+      "description": {
+        "ru": "Удалить модуль ядра AmneziaWG (рецепт: порядок важен): профили на программу (по одному, с ожиданием людей), modprobe -r, dkms remove --all, исходники /usr/src/amneziawg-3.1.20260906, хуки нового ядра, /etc/modules-load.d/amneziawg.conf (если ставили мы). Модулем пользуется сосед Kaskad (enabled в /etc/kaskad/gw/awg-kmod.json или интерфейсы kgw-awg*, kawg*) — модуль, DKMS и исходники остаются, убирается только своё. Пакеты сборки не удаляются — называются. Ответ: removed, kept_for_neighbour, packages, command (apt remove …); отказы: kmod_in_use, kmod_busy, коды kmod-engine",
+        "en": "Remove the AmneziaWG kernel module (recipe: the order matters): profiles to the program (one by one, waiting for people), modprobe -r, dkms remove --all, the /usr/src/amneziawg-3.1.20260906 sources, the new-kernel hooks, /etc/modules-load.d/amneziawg.conf (if we created it). The Kaskad neighbour uses the module (enabled in /etc/kaskad/gw/awg-kmod.json or interfaces kgw-awg*, kawg*) — the module, DKMS and sources stay, only ours is removed. The build packages are not removed — they are named. Reply: removed, kept_for_neighbour, packages, command (apt remove …); refusals: kmod_in_use, kmod_busy, the kmod-engine codes"
+      }
+    }
+  },
+  "resources": [
+    {
+      "uri": "goamnezia://status",
+      "action": "status",
+      "name": "Состояние сервера / Server status",
+      "description": {
+        "ru": "Снимок сервера: режим, домен, адрес, профили с портами и линейками, число людей. С него начинают сессию.",
+        "en": "A snapshot of the server: mode, domain, address, profiles with ports and lines, number of people. Start a session here."
+      }
+    },
+    {
+      "uri": "goamnezia://profiles",
+      "action": "profiles-status",
+      "name": "Профили / Profiles",
+      "description": {
+        "ru": "Профили AmneziaWG: контейнер, порт, линейка, состояние, версия образа, число пиров.",
+        "en": "AmneziaWG profiles: container, port, line, state, image version, peer count."
+      }
+    },
+    {
+      "uri": "goamnezia://users",
+      "action": "user-list",
+      "name": "Пользователи / Users",
+      "description": {
+        "ru": "Люди и их доступы БЕЗ секретов: имя, подпись, лимит, срок, профили. Приватных ключей здесь нет — их выдаёт только user_get_key.",
+        "en": "People and their access WITHOUT secrets: name, label, limit, expiry, profiles. No private keys here — only user_get_key hands those out."
+      }
+    },
+    {
+      "uri": "goamnezia://traffic",
+      "action": "traffic",
+      "name": "Трафик / Traffic",
+      "description": {
+        "ru": "Трафик и последние рукопожатия по профилям и людям: кто онлайн и сколько прошло через каждого.",
+        "en": "Traffic and last handshakes by profile and person: who is online and how much went through each."
+      }
+    },
+    {
+      "uri": "goamnezia://diagnose",
+      "action": "quality",
+      "name": "Диагностика / Diagnostics",
+      "description": {
+        "ru": "Диагностика сервера: Docker, ip_forward, занятость и публикация портов, сеть, свободное место, ключи сервера, таймеры. Сюда смотрят, когда «не работает».",
+        "en": "Server diagnostics: Docker, ip_forward, port usage and publication, network, free space, server keys, timers. Look here when «it does not work»."
+      }
+    },
+    {
+      "uri": "goamnezia://guide",
+      "file": "AGENT_GUIDE.md",
+      "mimeType": "text/markdown",
+      "name": "Гайд для агента / Agent guide",
+      "description": {
+        "ru": "Как работать с этим сервером: девять правил, карта инструментов, коды отказов и разборы типовых задач. Прочитай целиком один раз в начале сессии.",
+        "en": "How to work with this server: nine rules, the tool map, refusal codes and worked examples. Read it end to end once at the start of a session."
+      }
+    }
+  ],
+  "prompts": [
+    {
+      "name": "onboard_user",
+      "description": {
+        "ru": "Создать пользователя и выдать ему ключи нужных профилей",
+        "en": "Create a user and issue keys of the needed profiles"
+      },
+      "arguments": [
+        {
+          "name": "name",
+          "required": true
+        },
+        {
+          "name": "profiles",
+          "required": false
+        }
+      ]
+    },
+    {
+      "name": "diagnose_user",
+      "description": {
+        "ru": "Пользователь не подключается: проверить пир, рукопожатие, порт, версию клиента",
+        "en": "User cannot connect: check peer, handshake, port, client version"
+      },
+      "arguments": [
+        {
+          "name": "name",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "safe_core_update",
+      "description": {
+        "ru": "Обновить ядро профиля безопасно: бэкап, проверка, обновление, тест рукопожатия",
+        "en": "Update a profile core safely: backup, check, update, handshake test"
+      },
+      "arguments": [
+        {
+          "name": "profile",
+          "required": true
+        }
+      ]
+    }
+  ]
+}

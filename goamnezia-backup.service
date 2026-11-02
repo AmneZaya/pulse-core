@@ -1,0 +1,9 @@
+[Unit]
+Description=goAmnezia: бэкап по расписанию
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+Environment=GOAMNEZIA_BACKUP_KEEP=30
+ExecStart=/bin/bash -lc 'source /opt/goamnezia/lib/common.sh; source /opt/goamnezia/lib/i18n.sh; source /opt/goamnezia/lib/backup.sh; load_language "$(detect_language)"; backup_tick "${GOAMNEZIA_BACKUP_KEEP:-30}" >/dev/null'

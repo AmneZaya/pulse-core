@@ -1,0 +1,12 @@
+[Unit]
+Description=goAmnezia pro — проверка обновлений Amnezia (раз в сутки, без автообновления)
+
+[Timer]
+OnCalendar=*-*-* 05:10:00
+Persistent=true
+RandomizedDelaySec=1h
+AccuracySec=1min
+Unit=goamnezia-upstream.service
+
+[Install]
+WantedBy=timers.target

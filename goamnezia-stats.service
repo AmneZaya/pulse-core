@@ -1,0 +1,11 @@
+[Unit]
+Description=goAmnezia pro — статистика трафика по суткам (каждые 10 минут)
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Environment=GOAMNEZIA_WHO=timer
+TimeoutStartSec=10min
+ExecStart=/bin/bash /opt/goamnezia/install.sh --action=stats-tick --json
